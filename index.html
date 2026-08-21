@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboards IX</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#1f2733;--muted:#6b7785;--line:#e6eaf0;--accent:#1f6feb;}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+/* ---------- puerta ---------- */
+#gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;}
+.gbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px 30px 26px;
+  box-shadow:0 1px 3px rgba(20,30,50,.08),0 12px 34px rgba(20,30,50,.10);width:100%;max-width:370px;}
+.gbox h1{font-size:18px;margin:0 0 4px;font-weight:750;letter-spacing:-.2px;}
+.gbox p{margin:0 0 18px;font-size:12.5px;color:var(--muted);line-height:1.5;}
+.gbox label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+.gbox input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:15px;
+  font-family:inherit;color:var(--ink);letter-spacing:.5px;}
+.gbox input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,111,235,.13);}
+.gbox button{width:100%;margin-top:12px;border:0;background:var(--accent);color:#fff;font:inherit;font-weight:650;
+  font-size:14px;padding:11px;border-radius:9px;cursor:pointer;}
+.gbox button:hover{background:#1a5fd0;} .gbox button:disabled{opacity:.6;cursor:progress;}
+.gerr{margin-top:11px;font-size:12.5px;color:#b42318;background:#fef3f2;border:1px solid #fecdca;
+  border-radius:8px;padding:8px 10px;display:none;}
+.gerr.on{display:block;}
+/* ---------- cabecera ---------- */
+header{background:var(--card);border-bottom:1px solid var(--line);flex:0 0 auto;box-shadow:0 1px 3px rgba(20,30,50,.06);}
+.stamp{max-width:1280px;margin:0 auto;padding:6px 20px 0;font-size:10.5px;color:var(--muted);letter-spacing:.1px;}
+.stamp b{font-weight:650;color:#8894a3;font-size:10px;text-transform:uppercase;letter-spacing:.3px;}
+.bar{max-width:1280px;margin:0 auto;padding:4px 20px 0;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;}
+.brand{font-size:14px;font-weight:750;letter-spacing:-.2px;padding-bottom:12px;white-space:nowrap;}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.tab{border:0;background:transparent;cursor:pointer;font:inherit;color:var(--muted);
+  padding:7px 15px 10px;border-bottom:2px solid transparent;text-align:left;border-radius:8px 8px 0 0;}
+.tab:hover{background:#f8fafc;color:var(--ink);}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:650;}
+.t-lbl{display:block;font-size:13px;line-height:1.25;}
+.t-sub{display:block;font-size:10.5px;opacity:.75;line-height:1.25;}
+.lock{margin-left:auto;padding-bottom:12px;}
+.lock button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 11px;
+  font:inherit;font-size:12px;color:var(--muted);cursor:pointer;}
+.lock button:hover{background:#f8fafc;color:var(--ink);}
+main{flex:1 1 auto;position:relative;min-height:0;}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none;}
+iframe.on{display:block;}
+.load{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--muted);font-size:13px;gap:9px;}
+.load.on{display:flex;}
+.spin{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:640px){.bar,.stamp{padding-left:12px;padding-right:12px}.brand{padding-bottom:8px}.lock{display:none}}
+</style></head><body>
+
+<div id="gate"><form class="gbox" id="gform">
+  <h1>Dashboards IX</h1>
+  <p>Contenido protegido. Los dashboards están cifrados: se descifran en tu navegador con la clave.</p>
+  <label for="pw">Clave</label>
+  <input type="password" id="pw" autocomplete="current-password" autofocus>
+  <button type="submit" id="gbtn">Entrar</button>
+  <div class="gerr" id="gerr"></div>
+</form></div>
+
+<header hidden id="head">
+  <div class="stamp">Última actualización de datos &nbsp;·&nbsp; <b>Ventas RB GT</b> 19/08/2026 &nbsp;·&nbsp; <b>Stock RB GT</b> 20/08/2026 &nbsp;·&nbsp; <b>Inventario NB</b> 28/07/2026</div>
+  <div class="bar">
+    <div class="brand">Dashboards IX</div>
+    <div class="tabs" role="tablist">
+    <button class="tab" data-tab="ventas-rb" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">Running Balboa GT</span></button>
+    <button class="tab" data-tab="inv-rb" role="tab" aria-selected="false"><span class="t-lbl">Inventario</span><span class="t-sub">Running Balboa GT</span></button>
+    <button class="tab" data-tab="inv-nb" role="tab" aria-selected="false"><span class="t-lbl">Inventario</span><span class="t-sub">New Balance · Bambú / Santiago</span></button>
+    </div>
+    <div class="lock"><button type="button" id="lockbtn" title="Olvidar la clave en este navegador">Cerrar</button></div>
+  </div>
+</header>
+<main hidden id="main">
+  <div class="load" id="load"><span class="spin"></span><span id="loadtxt">Descargando…</span></div>
+    <iframe id="fventas-rb" data-enc="ventas-rb-gt.enc" title="Ventas — Running Balboa GT"></iframe>
+    <iframe id="finv-rb" data-enc="inventario-rb-gt.enc" title="Inventario — Running Balboa GT"></iframe>
+    <iframe id="finv-nb" data-enc="inventario-nb.enc" title="Inventario — New Balance · Bambú / Santiago"></iframe>
+</main>
+
+<script>
+// ---------------------------------------------------------------- cripto
+// Los .enc son AES-256-GCM. La llave sale de la clave con PBKDF2-SHA256 y el
+// salt que viene en crypt.json; nunca se guarda la llave, solo la clave en
+// sessionStorage para no volver a pedirla al cambiar de pestana.
+var TABS = ["ventas-rb", "inv-rb", "inv-nb"], CFG = null, KEY = null;
+var enc = new TextEncoder(), dec = new TextDecoder();
+function hex2buf(h){ var a = new Uint8Array(h.length/2);
+  for (var i=0;i<a.length;i++) a[i] = parseInt(h.substr(i*2,2),16); return a; }
+
+async function derivar(pw){
+  var base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt:hex2buf(CFG.salt), iterations:CFG.iter, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+}
+async function abrir(key, buf){
+  var b = new Uint8Array(buf);
+  return crypto.subtle.decrypt({name:"AES-GCM", iv:b.slice(0,12)}, key, b.slice(12));
+}
+
+// ---------------------------------------------------------------- puerta
+var gate=document.getElementById("gate"), gerr=document.getElementById("gerr"),
+    gbtn=document.getElementById("gbtn"), pw=document.getElementById("pw");
+function falla(msg){ gerr.textContent=msg; gerr.classList.add("on"); }
+
+async function intentar(clave, silencioso){
+  gbtn.disabled=true; gerr.classList.remove("on");
+  try{
+    if(!CFG) CFG = await (await fetch("crypt.json",{cache:"no-store"})).json();
+    var k = await derivar(clave);
+    var ok = dec.decode(await abrir(k, hex2buf(CFG.check)));   // sonda: falla rapido si la clave es otra
+    if(ok !== "ix-dashboards-ok") throw new Error("sonda");
+    KEY = k;
+    sessionStorage.setItem("ixpw", clave);
+    gate.remove();
+    document.getElementById("head").hidden=false;
+    document.getElementById("main").hidden=false;
+    show(location.hash.slice(1) || "ventas-rb", true);
+  }catch(e){
+    sessionStorage.removeItem("ixpw");
+    if(!silencioso) falla(e && e.name==="TypeError" ? "No pude cargar los datos. ¿Estás conectado?" : "Clave incorrecta.");
+    gbtn.disabled=false; pw.value=""; pw.focus();
+    return false;
+  }
+  gbtn.disabled=false; return true;
+}
+document.getElementById("gform").onsubmit=function(e){ e.preventDefault(); intentar(pw.value,false); };
+document.getElementById("lockbtn").onclick=function(){ sessionStorage.removeItem("ixpw"); location.reload(); };
+
+// ---------------------------------------------------------------- pestanas
+// Cada dashboard pesa 3-4 MB (Chart.js y fotos embebidos): se descarga y
+// descifra la PRIMERA vez que abris su pestana y despues queda en memoria.
+var load=document.getElementById("load"), loadtxt=document.getElementById("loadtxt");
+async function show(id, push){
+  var i = TABS.indexOf(id); if (i<0) i=0; id = TABS[i];
+  document.querySelectorAll(".tab").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.tab===id)); });
+  TABS.forEach(function(t){ document.getElementById("f"+t).classList.toggle("on", t===id); });
+  var f = document.getElementById("f"+id);
+  document.title = "Dashboards IX · " + f.title;
+  if (push && location.hash.slice(1)!==id) history.replaceState(null,"","#"+id);
+  if (f.dataset.ready) return;
+  f.dataset.ready = "1";
+  load.classList.add("on"); loadtxt.textContent = "Descargando…";
+  try{
+    var buf = await (await fetch(f.dataset.enc)).arrayBuffer();
+    loadtxt.textContent = "Descifrando…";
+    var html = dec.decode(await abrir(KEY, buf));
+    // blob mismo-origen: el dashboard corre su propio JS sin problema
+    f.src = URL.createObjectURL(new Blob([html], {type:"text/html"}));
+    f.addEventListener("load", function(){ load.classList.remove("on"); }, {once:true});
+  }catch(e){
+    delete f.dataset.ready; load.classList.remove("on");
+    alert("No pude abrir ese dashboard: " + e.message);
+  }
+}
+document.querySelectorAll(".tab").forEach(function(b){ b.onclick=function(){ show(b.dataset.tab,true); }; });
+window.addEventListener("hashchange", function(){ if(KEY) show(location.hash.slice(1),false); });
+
+// si ya entraste en esta pestana del navegador, no vuelve a preguntar
+(function(){ var g=sessionStorage.getItem("ixpw"); if(g) intentar(g,true); })();
+</script></body></html>

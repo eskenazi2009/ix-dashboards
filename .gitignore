@@ -1,0 +1,12 @@
+# La clave no se sube: el repo es publico.
+clave.txt
+
+# NUNCA subir dashboards en claro, solo los .enc
+*.html
+!index.html
+!_index_tpl.html
+
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
