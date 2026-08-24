@@ -156,6 +156,18 @@ async function show(id, push){
     alert("No pude abrir ese dashboard: " + e.message);
   }
 }
+// Los dashboards corren en iframes de blob y ahi el navegador puede bloquear la
+// descarga del Excel sin avisar. Cuando pasa, el iframe nos manda el Blob y la
+// disparamos desde aca, que es el documento de primer nivel.
+window.addEventListener("message", function(ev){
+  if (ev.source !== window && ev.data && ev.data.ix === "download" && ev.data.blob instanceof Blob) {
+    var url = URL.createObjectURL(ev.data.blob), a = document.createElement("a");
+    a.href = url; a.download = ev.data.name || "descarga.xlsx";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+  }
+});
+
 document.querySelectorAll(".tab").forEach(function(b){ b.onclick=function(){ show(b.dataset.tab,true); }; });
 window.addEventListener("hashchange", function(){ if(KEY) show(location.hash.slice(1),false); });
 
