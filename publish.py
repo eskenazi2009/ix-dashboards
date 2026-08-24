@@ -59,7 +59,17 @@ def fecha_datos(tab_id, html, src):
     return datetime.date.fromtimestamp(os.path.getmtime(src)).strftime("%d/%m/%Y")
 
 # ------------------------------------------------------------------- cifrado
-salt = secrets.token_bytes(16)
+# El salt se REUTILIZA entre publicaciones. Si se genera uno nuevo cada vez, la
+# llave cambia y cualquier .enc que el navegador o el CDN tengan cacheado deja
+# de descifrar (AES-GCM falla con mensaje vacio). Con el salt fijo, un .enc
+# viejo en cache a lo sumo esta desactualizado, pero abre.
+_cj = os.path.join(HERE, "crypt.json")
+if os.path.exists(_cj):
+    salt = bytes.fromhex(json.load(open(_cj, encoding="utf-8"))["salt"])
+    print("  salt reutilizado de crypt.json")
+else:
+    salt = secrets.token_bytes(16)
+    print("  salt nuevo (primera publicacion)")
 key = hashlib.pbkdf2_hmac("sha256", CLAVE.encode(), salt, ITER, 32)
 aes = AESGCM(key)
 
@@ -67,7 +77,7 @@ def cifrar(data: bytes) -> bytes:
     iv = secrets.token_bytes(12)
     return iv + aes.encrypt(iv, data, None)
 
-fechas, faltan, total = [], [], 0
+fechas, faltan, total, vers = [], [], 0, {}
 for tid, lbl, sub, dest, src, corto in TABS:
     if not os.path.exists(src):
         faltan.append(src); continue
@@ -76,6 +86,9 @@ for tid, lbl, sub, dest, src, corto in TABS:
     fechas.append((corto, f))
     blob = cifrar(html.encode("utf-8"))
     open(os.path.join(HERE, dest), "wb").write(blob)
+    # version por contenido: cuelga de la URL para que una publicacion nueva
+    # nunca se sirva contra un .enc viejo en cache
+    vers[tid] = hashlib.sha256(blob).hexdigest()[:10]
     total += len(blob)
     print(f"  {dest:<24} {len(blob)/1048576:>5.1f} MB cifrado   datos al {f}   <- {os.path.relpath(src, IX)}")
 if faltan:
@@ -93,8 +106,10 @@ btns = "\n".join(
     '    <button class="tab" data-tab="%s" role="tab" aria-selected="false">'
     '<span class="t-lbl">%s</span><span class="t-sub">%s</span></button>' % (tid, lbl, sub)
     for tid, lbl, sub, _d, _s, _c in TABS)
-frames = "\n".join('    <iframe id="f%s" data-enc="%s" title="%s — %s"></iframe>' % (tid, dest, lbl, sub)
-                   for tid, lbl, sub, dest, _s, _c in TABS)
+frames = "\n".join(
+    '    <iframe id="f%s" data-enc="%s?v=%s" title="%s — %s"></iframe>'
+    % (tid, dest, vers.get(tid, "0"), lbl, sub)
+    for tid, lbl, sub, dest, _s, _c in TABS)
 linea = " &nbsp;·&nbsp; ".join('<b>%s</b> %s' % (c, f) for c, f in fechas)
 
 HTML = open(os.path.join(HERE, "_index_tpl.html"), encoding="utf-8").read()
