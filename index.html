@@ -62,13 +62,14 @@ iframe.on{display:block;}
 </form></div>
 
 <header hidden id="head">
-  <div class="stamp">Última actualización de datos &nbsp;·&nbsp; <b>Ventas RB GT</b> 14/09/2026 &nbsp;·&nbsp; <b>Stock RB GT</b> 15/09/2026 &nbsp;·&nbsp; <b>Ventas NB</b> 14/09/2026 &nbsp;·&nbsp; <b>Inventario NB</b> 15/09/2026</div>
+  <div class="stamp">Última actualización de datos &nbsp;·&nbsp; <b>Ventas RB GT</b> 14/09/2026 &nbsp;·&nbsp; <b>Stock RB GT</b> 15/09/2026 &nbsp;·&nbsp; <b>Ventas NB SV</b> 14/09/2026 &nbsp;·&nbsp; <b>Ventas NB RD</b> 14/09/2026 &nbsp;·&nbsp; <b>Inventario NB</b> 15/09/2026</div>
   <div class="bar">
     <div class="brand">Dashboards IX</div>
     <div class="tabs" role="tablist">
     <button class="tab" data-tab="ventas-rb" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">Running Balboa GT</span></button>
     <button class="tab" data-tab="inv-rb" role="tab" aria-selected="false"><span class="t-lbl">Inventario</span><span class="t-sub">Running Balboa GT</span></button>
-    <button class="tab" data-tab="ventas-nb" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">New Balance · Bambú / Santiago</span></button>
+    <button class="tab" data-tab="ventas-nb-sv" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">New Balance El Salvador</span></button>
+    <button class="tab" data-tab="ventas-nb-rd" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">New Balance Dominicana</span></button>
     <button class="tab" data-tab="inv-nb" role="tab" aria-selected="false"><span class="t-lbl">Inventario</span><span class="t-sub">New Balance · Bambú / Santiago</span></button>
     </div>
     <div class="lock"><button type="button" id="lockbtn" title="Olvidar la clave en este navegador">Cerrar</button></div>
@@ -76,10 +77,11 @@ iframe.on{display:block;}
 </header>
 <main hidden id="main">
   <div class="load" id="load"><span class="spin"></span><span id="loadtxt">Descargando…</span></div>
-    <iframe id="fventas-rb" data-enc="ventas-rb-gt.enc?v=0310bdbf8c" title="Ventas — Running Balboa GT"></iframe>
-    <iframe id="finv-rb" data-enc="inventario-rb-gt.enc?v=6c2e6f93c5" title="Inventario — Running Balboa GT"></iframe>
-    <iframe id="fventas-nb" data-enc="ventas-nb.enc?v=d1cd4305a3" title="Ventas — New Balance · Bambú / Santiago"></iframe>
-    <iframe id="finv-nb" data-enc="inventario-nb.enc?v=1df06e7380" title="Inventario — New Balance · Bambú / Santiago"></iframe>
+    <iframe id="fventas-rb" data-enc="ventas-rb-gt.enc?v=ddacd94d56" title="Ventas — Running Balboa GT"></iframe>
+    <iframe id="finv-rb" data-enc="inventario-rb-gt.enc?v=93fdeff58a" title="Inventario — Running Balboa GT"></iframe>
+    <iframe id="fventas-nb-sv" data-enc="ventas-nb-sv.enc?v=a19d2edd47" title="Ventas — New Balance El Salvador"></iframe>
+    <iframe id="fventas-nb-rd" data-enc="ventas-nb-rd.enc?v=531b98b9b7" title="Ventas — New Balance Dominicana"></iframe>
+    <iframe id="finv-nb" data-enc="inventario-nb.enc?v=32c11d1ecb" title="Inventario — New Balance · Bambú / Santiago"></iframe>
 </main>
 
 <script>
@@ -87,7 +89,7 @@ iframe.on{display:block;}
 // Los .enc son AES-256-GCM. La llave sale de la clave con PBKDF2-SHA256 y el
 // salt que viene en crypt.json; nunca se guarda la llave, solo la clave en
 // sessionStorage para no volver a pedirla al cambiar de pestana.
-var TABS = ["ventas-rb", "inv-rb", "ventas-nb", "inv-nb"], CFG = null, KEY = null;
+var TABS = ["ventas-rb", "inv-rb", "ventas-nb-sv", "ventas-nb-rd", "inv-nb"], CFG = null, KEY = null;
 var enc = new TextEncoder(), dec = new TextDecoder();
 function hex2buf(h){ var a = new Uint8Array(h.length/2);
   for (var i=0;i<a.length;i++) a[i] = parseInt(h.substr(i*2,2),16); return a; }

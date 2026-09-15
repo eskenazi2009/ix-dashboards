@@ -37,8 +37,12 @@ TABS = [
      os.path.join(IX, "RB GT", "Ventas", "dashboard-ventas-RB-GT.html"), "Ventas RB GT"),
     ("inv-rb", "Inventario", "Running Balboa GT", "inventario-rb-gt.enc",
      os.path.join(IX, "RB GT", "Inventarios", "dashboard-inventario-RB-GT.html"), "Stock RB GT"),
-    ("ventas-nb", "Ventas", "New Balance · Bambú / Santiago", "ventas-nb.enc",
-     os.path.join(IX, "NB Inv", "ventas", "dashboard-ventas-NB.html"), "Ventas NB"),
+    # Las dos tiendas NB van SEPARADAS: son paises distintos y no se pueden
+    # hacer traspasos entre ellas, mezclarlas solo confunde.
+    ("ventas-nb-sv", "Ventas", "New Balance El Salvador", "ventas-nb-sv.enc",
+     os.path.join(IX, "NB Inv", "ventas", "dashboard-ventas-NB-SV.html"), "Ventas NB SV"),
+    ("ventas-nb-rd", "Ventas", "New Balance Dominicana", "ventas-nb-rd.enc",
+     os.path.join(IX, "NB Inv", "ventas", "dashboard-ventas-NB-RD.html"), "Ventas NB RD"),
     ("inv-nb", "Inventario", "New Balance · Bambú / Santiago", "inventario-nb.enc",
      os.path.join(IX, "NB Inv", "dashboard-inventario-NB.html"), "Inventario NB"),
 ]
@@ -48,7 +52,7 @@ def fecha_datos(tab_id, html, src):
     """Hasta que fecha llegan los DATOS del dashboard (no cuando se corrio el
     script). Cada dashboard la escribe en un sitio distinto; si algun dia cambia
     el texto, se cae a la fecha de modificacion del archivo."""
-    if tab_id in ("ventas-rb", "ventas-nb"):
+    if tab_id.startswith("ventas-"):
         m = re.search(r'DMAX\s*=\s*"(\d{4})-(\d{2})-(\d{2})"', html)      # ultima venta
         if m: return f"{m.group(3)}/{m.group(2)}/{m.group(1)}"
     if tab_id == "inv-rb":
