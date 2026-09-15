@@ -62,12 +62,13 @@ iframe.on{display:block;}
 </form></div>
 
 <header hidden id="head">
-  <div class="stamp">Última actualización de datos &nbsp;·&nbsp; <b>Ventas RB GT</b> 14/09/2026 &nbsp;·&nbsp; <b>Stock RB GT</b> 15/09/2026 &nbsp;·&nbsp; <b>Inventario NB</b> 15/09/2026</div>
+  <div class="stamp">Última actualización de datos &nbsp;·&nbsp; <b>Ventas RB GT</b> 14/09/2026 &nbsp;·&nbsp; <b>Stock RB GT</b> 15/09/2026 &nbsp;·&nbsp; <b>Ventas NB</b> 14/09/2026 &nbsp;·&nbsp; <b>Inventario NB</b> 15/09/2026</div>
   <div class="bar">
     <div class="brand">Dashboards IX</div>
     <div class="tabs" role="tablist">
     <button class="tab" data-tab="ventas-rb" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">Running Balboa GT</span></button>
     <button class="tab" data-tab="inv-rb" role="tab" aria-selected="false"><span class="t-lbl">Inventario</span><span class="t-sub">Running Balboa GT</span></button>
+    <button class="tab" data-tab="ventas-nb" role="tab" aria-selected="false"><span class="t-lbl">Ventas</span><span class="t-sub">New Balance · Bambú / Santiago</span></button>
     <button class="tab" data-tab="inv-nb" role="tab" aria-selected="false"><span class="t-lbl">Inventario</span><span class="t-sub">New Balance · Bambú / Santiago</span></button>
     </div>
     <div class="lock"><button type="button" id="lockbtn" title="Olvidar la clave en este navegador">Cerrar</button></div>
@@ -75,9 +76,10 @@ iframe.on{display:block;}
 </header>
 <main hidden id="main">
   <div class="load" id="load"><span class="spin"></span><span id="loadtxt">Descargando…</span></div>
-    <iframe id="fventas-rb" data-enc="ventas-rb-gt.enc?v=69e3099fa4" title="Ventas — Running Balboa GT"></iframe>
-    <iframe id="finv-rb" data-enc="inventario-rb-gt.enc?v=b846468a95" title="Inventario — Running Balboa GT"></iframe>
-    <iframe id="finv-nb" data-enc="inventario-nb.enc?v=b4d7586849" title="Inventario — New Balance · Bambú / Santiago"></iframe>
+    <iframe id="fventas-rb" data-enc="ventas-rb-gt.enc?v=b7b3b44a67" title="Ventas — Running Balboa GT"></iframe>
+    <iframe id="finv-rb" data-enc="inventario-rb-gt.enc?v=950233e32b" title="Inventario — Running Balboa GT"></iframe>
+    <iframe id="fventas-nb" data-enc="ventas-nb.enc?v=3a628fe340" title="Ventas — New Balance · Bambú / Santiago"></iframe>
+    <iframe id="finv-nb" data-enc="inventario-nb.enc?v=42da9cb9ed" title="Inventario — New Balance · Bambú / Santiago"></iframe>
 </main>
 
 <script>
@@ -85,7 +87,7 @@ iframe.on{display:block;}
 // Los .enc son AES-256-GCM. La llave sale de la clave con PBKDF2-SHA256 y el
 // salt que viene en crypt.json; nunca se guarda la llave, solo la clave en
 // sessionStorage para no volver a pedirla al cambiar de pestana.
-var TABS = ["ventas-rb", "inv-rb", "inv-nb"], CFG = null, KEY = null;
+var TABS = ["ventas-rb", "inv-rb", "ventas-nb", "inv-nb"], CFG = null, KEY = null;
 var enc = new TextEncoder(), dec = new TextDecoder();
 function hex2buf(h){ var a = new Uint8Array(h.length/2);
   for (var i=0;i<a.length;i++) a[i] = parseInt(h.substr(i*2,2),16); return a; }
