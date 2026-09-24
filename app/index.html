@@ -232,10 +232,10 @@ function render(){
     var incompleto = cov[1] < endIso || cov[0] > startIso;
     var hasta = cov[1] < endIso ? +cov[1].slice(8,10) : n;
     var desde = cov[0] > startIso ? +cov[0].slice(8,10) : 1;
-    var el=document.createElement("div"); el.className="month"+(ym===lym?" open":"");
+    var el=document.createElement("div"); el.className="month";
     var sub = incompleto ? ("del "+desde+" al "+hasta) : (n+" días");
     sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
-    var h='<button class="mhead" type="button" aria-expanded="'+(ym===lym)+'"><div class="mname"><b>'+MES[mm-1]+' '+yy+
+    var h='<button class="mhead" type="button" aria-expanded="false"><div class="mname"><b>'+MES[mm-1]+' '+yy+
       (incompleto?'<span class="pill">parcial</span>':'')+'</b><span>'+sub+'</span></div><div class="mtot">'+usd(m.tot)+
       '</div><svg class="caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></button>';
     if(SS.length>1){
