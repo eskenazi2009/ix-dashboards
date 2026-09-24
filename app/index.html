@@ -164,8 +164,8 @@ async function cargar(){
     else { load.classList.remove("on"); alert("No pude cargar las ventas: "+e.message); return; }
   }
   load.classList.remove("on");
-  STORE=ls("ixstore")||"ALL";
-  if(STORE!=="ALL"&&!DATA.stores.some(function(s){return s.id===STORE;})) STORE="ALL";
+  STORE=ls("ixstore")||DATA.stores[0].id;
+  if(!DATA.stores.some(function(s){return s.id===STORE;})) STORE=DATA.stores[0].id;
   render();
 }
 
@@ -186,7 +186,7 @@ function render(){
 
   // chips
   var ch=document.getElementById("chips"); ch.innerHTML="";
-  [["ALL","Todas"]].concat(DATA.stores.map(function(s){return [s.id, s.id==="GT"?"RB Guatemala":"NB "+s.country];})).forEach(function(p){
+  DATA.stores.map(function(s){return [s.id, s.id==="GT"?"RB Guatemala":"NB "+s.country];}).forEach(function(p){
     var b=document.createElement("button");b.type="button";b.className="chip";b.textContent=p[1];
     b.setAttribute("aria-pressed",String(p[0]===STORE));
     b.onclick=function(){STORE=p[0];ls("ixstore",STORE);render();};
@@ -209,12 +209,11 @@ function render(){
   var last=cov[1], lym=last.slice(0,7), cur=M[lym]||{tot:0,u:0,days:{}};
   var y=+lym.slice(0,4), mo=+lym.slice(5,7), dl=+last.slice(8,10), ndays=dim(y,mo);
   var lastDay=0; SS.forEach(function(s){ if(s.days[last]) lastDay+=s.days[last][0]; });
-  var pm=mo===1?(y-1)+"-12":y+"-"+String(mo-1).padStart(2,"0"), prev=M[pm];
   var k=document.getElementById("kpis"); k.innerHTML="";
   function kpi(l,v,s){k.insertAdjacentHTML("beforeend",'<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>');}
-  kpi(MES[mo-1]+" "+y, usd(cur.tot), (dl<ndays?"al día "+dl+" de "+ndays:"mes completo")+" · "+Math.round(cur.u).toLocaleString("en-US")+" uds");
+  kpi(MES[mo-1]+" "+y, usd(cur.tot), dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
+  kpi("Unidades · "+MES[mo-1], Math.round(cur.u).toLocaleString("en-US")+" uds", dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
   kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
-  if(prev) kpi(MES[(mo+10)%12]+" "+(mo===1?y-1:y), usd(prev.tot), Math.round(prev.u).toLocaleString("en-US")+" uds · mes completo");
   kpi("Promedio diario", usd(cur.tot/Math.max(1,dl)), MES[mo-1]+" · "+dl+" días");
 
   // lista de meses
