@@ -190,11 +190,12 @@ function stores(){return STORE==="ALL"?DATA.stores:DATA.stores.filter(function(s
 function render(){
   var SS=stores(), cov=[null,null];
   SS.forEach(function(s){ cov[0]=!cov[0]||s.cov[0]<cov[0]?s.cov[0]:cov[0]; cov[1]=!cov[1]||s.cov[1]>cov[1]?s.cov[1]:cov[1]; });
-  document.getElementById("asof").textContent="Datos al "+fdate(cov[1]);
+  document.getElementById("asof").textContent=(SS[0].name?SS[0].brand+" "+SS[0].name+" · "+SS[0].country+" · ":"")+"Datos al "+fdate(cov[1]);
 
   // chips
   var ch=document.getElementById("chips"); ch.innerHTML="";
-  DATA.stores.map(function(s){return [s.id, s.id==="GT"?"RB Guatemala":"NB "+s.country];}).forEach(function(p){
+  function lbl(s){ var b=s.brand==="New Balance"?"NB":"RB"; return b+" "+(s.name||s.country); }
+  DATA.stores.map(function(s){return [s.id, lbl(s)];}).forEach(function(p){
     var b=document.createElement("button");b.type="button";b.className="chip";b.textContent=p[1];
     b.setAttribute("aria-pressed",String(p[0]===STORE));
     b.onclick=function(){STORE=p[0];ls("ixstore",STORE);render();};
@@ -207,7 +208,7 @@ function render(){
     Object.keys(s.days).forEach(function(d){
       var ym=d.slice(0,7), v=s.days[d];
       var m=M[ym]||(M[ym]={tot:0,u:0,by:{},days:{}});
-      m.tot+=v[0]; m.u+=v[1]; m.by[s.id]=(m.by[s.id]||0)+v[0];
+      m.tot+=v[0]; if(v[1]!=null){m.u+=v[1];m.hasU=true;} m.by[s.id]=(m.by[s.id]||0)+v[0];
       (m.days[d]||(m.days[d]={}))[s.id]=v;
     });
   });
@@ -220,7 +221,7 @@ function render(){
   var k=document.getElementById("kpis"); k.innerHTML="";
   function kpi(l,v,s){k.insertAdjacentHTML("beforeend",'<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>');}
   kpi(MES[mo-1]+" "+y, usd(cur.tot), dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
-  kpi("Unidades · "+MES[mo-1], Math.round(cur.u).toLocaleString("en-US")+" uds", dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
+  if(cur.hasU) kpi("Unidades · "+MES[mo-1], Math.round(cur.u).toLocaleString("en-US")+" uds", dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
   kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
   kpi("Promedio diario", usd(cur.tot/Math.max(1,dl)), MES[mo-1]+" · "+dl+" días");
 
@@ -234,7 +235,7 @@ function render(){
     var desde = cov[0] > startIso ? +cov[0].slice(8,10) : 1;
     var el=document.createElement("div"); el.className="month";
     var sub = incompleto ? ("del "+desde+" al "+hasta) : (n+" días");
-    sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
+    if(m.hasU) sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
     var h='<button class="mhead" type="button" aria-expanded="false"><div class="mname"><b>'+MES[mm-1]+' '+yy+
       (incompleto?'<span class="pill">parcial</span>':'')+'</b><span>'+sub+'</span></div><div class="mtot">'+usd(m.tot)+
       '</div><svg class="caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></button>';
@@ -244,13 +245,13 @@ function render(){
     }
     // dias
     var ds=Object.keys(m.days).sort().reverse();
-    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':'<th>Uds</th><th>Venta</th>')+'</tr></thead><tbody>';
+    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':(m.hasU?'<th>Uds</th>':'')+'<th>Venta</th>')+'</tr></thead><tbody>';
     ds.forEach(function(d){
-      var dd=m.days[d], tot=0, u=0; Object.keys(dd).forEach(function(id){tot+=dd[id][0];u+=dd[id][1];});
+      var dd=m.days[d], tot=0, u=0; Object.keys(dd).forEach(function(id){tot+=dd[id][0];u+=(dd[id][1]||0);});
       var w=dow(d);
       t+='<tr class="'+(w===0||w===6?"wknd":"")+'"><td>'+(+d.slice(8,10))+'</td><td class="dow">'+DOW[w]+'</td>';
       if(SS.length>1){ SS.forEach(function(s){ t+= dd[s.id]?'<td>'+usd(dd[s.id][0])+'</td>':'<td class="z">–</td>'; }); t+='<td class="tot">'+usd(tot)+'</td>'; }
-      else t+='<td>'+Math.round(u)+'</td><td class="tot">'+usd(tot)+'</td>';
+      else t+=(m.hasU?'<td>'+Math.round(u)+'</td>':'')+'<td class="tot">'+usd(tot)+'</td>';
       t+='</tr>';
     });
     t+='</tbody></table></div>';
@@ -261,7 +262,7 @@ function render(){
 
   var f=document.getElementById("foot");
   f.innerHTML=(f.textContent.indexOf("Sin conexión")===0?f.textContent+"<br>":"")+
-    "Venta neta en USD, todos los canales (tienda + ecommerce). Actualizado "+DATA.gen+".<br>"+
+    "Venta neta en USD sin impuestos. IX: tienda + ecommerce. Panamá: del reporte diario de Jorge Peraza. Actualizado "+DATA.gen+".<br>"+
     '<button type="button" id="lock">Cerrar sesión</button> · <a href="../" style="color:inherit">Dashboards completos</a>';
   document.getElementById("lock").onclick=function(){ls("ixpw",null);ls("ixmacro",null);location.reload();};
 }
