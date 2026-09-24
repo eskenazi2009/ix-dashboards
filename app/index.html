@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14213d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Ventas IX</title>
+<style>
+:root{
+  --bg:#f3f4f7;--card:#ffffff;--ink:#14213d;--muted:#6c7689;--line:#e2e5ec;--soft:#f7f8fb;
+  --navy:#14213d;--gt:#d96b2b;--sv:#2563c9;--rd:#1f9a68;--warn:#b7791f;--warnbg:#fdf6e7;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.35;font-variant-numeric:tabular-nums;}
+button{font:inherit;color:inherit}
+/* ---------- puerta ---------- */
+#gate{position:fixed;inset:0;z-index:50;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:24px;}
+.gbox{width:100%;max-width:340px;color:#fff;}
+.gbox h1{font-size:26px;margin:0 0 4px;font-weight:800;letter-spacing:-.4px}
+.gbox p{margin:0 0 22px;font-size:13px;opacity:.7;line-height:1.5}
+.gbox input{width:100%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;
+  border-radius:12px;padding:14px;font-size:18px;letter-spacing:2px;text-align:center}
+.gbox input:focus{outline:none;border-color:#fff}
+.gbox button{width:100%;margin-top:12px;border:0;background:#fff;color:var(--navy);font-weight:700;
+  font-size:15px;padding:14px;border-radius:12px;cursor:pointer}
+.gbox button:disabled{opacity:.6}
+.gerr{margin-top:12px;font-size:13px;color:#ffb4a8;display:none}
+.gerr.on{display:block}
+/* ---------- app ---------- */
+header{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 16px 12px;}
+.hrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.hrow h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.3px}
+.hrow small{font-size:11.5px;opacity:.7;white-space:nowrap}
+.chips{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid rgba(255,255,255,.28);background:transparent;color:#fff;
+  border-radius:999px;padding:6px 13px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:#fff;color:var(--navy);border-color:#fff;font-weight:700}
+main{padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px));max-width:640px;margin:0 auto}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-top:3px}
+.kpi .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+/* meses */
+.sec{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin:6px 2px 8px}
+.month{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;overflow:hidden}
+.mhead{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:12px 14px;text-align:left;cursor:pointer}
+.mhead:focus-visible{outline:2px solid var(--sv);outline-offset:-2px}
+.mname{flex:1 1 auto;min-width:0}
+.mname b{font-size:15.5px;display:block}
+.mname span{font-size:11.5px;color:var(--muted)}
+.mtot{font-size:17px;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
+.caret{width:18px;height:18px;flex:0 0 auto;color:var(--muted);transition:transform .2s}
+.month.open .caret{transform:rotate(180deg)}
+.bars{display:flex;height:5px;border-radius:3px;overflow:hidden;background:var(--soft);margin:0 14px 10px}
+.bars i{display:block;height:100%}
+.bars i.GT{background:var(--gt)} .bars i.SV{background:var(--sv)} .bars i.RD{background:var(--rd)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:0 14px 10px;font-size:11.5px;color:var(--muted)}
+.legend b{color:var(--ink);font-weight:650}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:1px}
+.dot.GT{background:var(--gt)} .dot.SV{background:var(--sv)} .dot.RD{background:var(--rd)}
+.pill{font-size:10.5px;color:var(--warn);background:var(--warnbg);border-radius:6px;padding:2px 6px;margin-left:6px;font-weight:600;vertical-align:1px}
+/* dias */
+.days{display:none;border-top:1px solid var(--line);background:var(--soft)}
+.month.open .days{display:block}
+.days table{width:100%;border-collapse:collapse;font-size:13.5px}
+.days th{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;
+  text-align:right;padding:8px 8px 4px;border-bottom:1px solid var(--line)}
+.days th:first-child,.days td:first-child{text-align:left;padding-left:14px}
+.days th:last-child,.days td:last-child{padding-right:14px}
+.days td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.days tr:last-child td{border-bottom:0}
+.days td.dow{color:var(--muted);font-size:11px;text-transform:uppercase;text-align:left;padding-left:0;width:1%}
+.days td.tot{font-weight:700}
+.days tr.wknd td:first-child{color:var(--muted)}
+.days td.z{color:var(--line)}
+.foot{font-size:11.5px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.6}
+.foot button{border:0;background:transparent;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px}
+.load{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(243,244,247,.85);color:var(--muted);font-size:14px;gap:9px;z-index:20}
+.load.on{display:flex}
+.spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--navy);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.caret{transition:none}}
+</style></head><body>
+
+<div id="gate"><form class="gbox" id="gform">
+  <h1>Ventas IX</h1>
+  <p>Running Balboa Guatemala · New Balance El Salvador · New Balance Dominicana</p>
+  <input type="password" id="pw" autocomplete="current-password" inputmode="text" aria-label="Clave" autofocus>
+  <button type="submit" id="gbtn">Entrar</button>
+  <div class="gerr" id="gerr"></div>
+</form></div>
+
+<header hidden id="head">
+  <div class="hrow"><h1>Ventas IX</h1><small id="asof"></small></div>
+  <div class="chips" id="chips" role="group" aria-label="Tienda"></div>
+</header>
+<main hidden id="main">
+  <div class="kpis" id="kpis"></div>
+  <div class="sec">Por mes · toca para ver los días</div>
+  <div id="months"></div>
+  <div class="foot" id="foot"></div>
+</main>
+<div class="load" id="load"><span class="spin"></span><span id="loadtxt">Descargando…</span></div>
+
+<script>
+// ------------------------------------------------------------- cripto (igual que el sitio)
+var CFG=null, KEY=null, DATA=null, STORE="ALL";
+var enc=new TextEncoder(), dec=new TextDecoder();
+function hex2buf(h){var a=new Uint8Array(h.length/2);for(var i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;}
+async function derivar(pw){
+  var base=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:hex2buf(CFG.salt),iterations:CFG.iter,hash:"SHA-256"},
+    base,{name:"AES-GCM",length:256},false,["decrypt"]);
+}
+async function abrir(key,buf){var b=new Uint8Array(buf);return crypto.subtle.decrypt({name:"AES-GCM",iv:b.slice(0,12)},key,b.slice(12));}
+function ls(k,v){try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){return null;}}
+
+// ------------------------------------------------------------- puerta
+var gate=document.getElementById("gate"),gerr=document.getElementById("gerr"),gbtn=document.getElementById("gbtn"),pw=document.getElementById("pw");
+var load=document.getElementById("load"),loadtxt=document.getElementById("loadtxt");
+function falla(m){gerr.textContent=m;gerr.classList.add("on");}
+async function intentar(clave,silencioso){
+  gbtn.disabled=true;gerr.classList.remove("on");
+  try{
+    if(!CFG) CFG=await (await fetch("../crypt.json",{cache:"no-store"})).json();
+    var k=await derivar(clave);
+    if(dec.decode(await abrir(k,hex2buf(CFG.check)))!=="ix-dashboards-ok") throw new Error("sonda");
+    KEY=k; ls("ixpw",clave);
+    gate.remove(); document.getElementById("head").hidden=false; document.getElementById("main").hidden=false;
+    await cargar();
+  }catch(e){
+    ls("ixpw",null);
+    if(!silencioso) falla(e&&e.name==="TypeError"?"No pude cargar los datos. ¿Estás conectado?":"Clave incorrecta.");
+    gbtn.disabled=false;pw.value="";pw.focus();return false;
+  }
+  gbtn.disabled=false;return true;
+}
+document.getElementById("gform").onsubmit=function(e){e.preventDefault();intentar(pw.value,false);};
+
+// ------------------------------------------------------------- datos
+async function cargar(){
+  load.classList.add("on");
+  try{
+    var r=await fetch("../ventas-macro.enc?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    loadtxt.textContent="Descifrando…";
+    DATA=JSON.parse(dec.decode(await abrir(KEY,await r.arrayBuffer())));
+    ls("ixmacro",JSON.stringify(DATA));       // copia para abrir sin señal
+  }catch(e){
+    var c=ls("ixmacro");
+    if(c){ DATA=JSON.parse(c); document.getElementById("foot").textContent="Sin conexión: mostrando la última copia guardada."; }
+    else { load.classList.remove("on"); alert("No pude cargar las ventas: "+e.message); return; }
+  }
+  load.classList.remove("on");
+  STORE=ls("ixstore")||"ALL";
+  if(STORE!=="ALL"&&!DATA.stores.some(function(s){return s.id===STORE;})) STORE="ALL";
+  render();
+}
+
+// ------------------------------------------------------------- formato
+var MES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+var DOW=["dom","lun","mar","mié","jue","vie","sáb"];
+function usd(n){return "$"+Math.round(n).toLocaleString("en-US");}
+function fdate(iso){var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
+function dow(iso){var p=iso.split("-");return new Date(+p[0],+p[1]-1,+p[2]).getDay();}
+function dim(y,m){return new Date(y,m,0).getDate();}   // m 1-12
+
+// ------------------------------------------------------------- render
+function stores(){return STORE==="ALL"?DATA.stores:DATA.stores.filter(function(s){return s.id===STORE;});}
+function render(){
+  var SS=stores(), cov=[null,null];
+  SS.forEach(function(s){ cov[0]=!cov[0]||s.cov[0]<cov[0]?s.cov[0]:cov[0]; cov[1]=!cov[1]||s.cov[1]>cov[1]?s.cov[1]:cov[1]; });
+  document.getElementById("asof").textContent="Datos al "+fdate(cov[1]);
+
+  // chips
+  var ch=document.getElementById("chips"); ch.innerHTML="";
+  [["ALL","Todas"]].concat(DATA.stores.map(function(s){return [s.id, s.id==="GT"?"RB Guatemala":"NB "+s.country];})).forEach(function(p){
+    var b=document.createElement("button");b.type="button";b.className="chip";b.textContent=p[1];
+    b.setAttribute("aria-pressed",String(p[0]===STORE));
+    b.onclick=function(){STORE=p[0];ls("ixstore",STORE);render();};
+    ch.appendChild(b);
+  });
+
+  // meses: {ym: {tot, byStore{id:tot}, days{iso:{id:[net,u]}}}}
+  var M={};
+  SS.forEach(function(s){
+    Object.keys(s.days).forEach(function(d){
+      var ym=d.slice(0,7), v=s.days[d];
+      var m=M[ym]||(M[ym]={tot:0,u:0,by:{},days:{}});
+      m.tot+=v[0]; m.u+=v[1]; m.by[s.id]=(m.by[s.id]||0)+v[0];
+      (m.days[d]||(m.days[d]={}))[s.id]=v;
+    });
+  });
+  var yms=Object.keys(M).sort().reverse();
+
+  // KPIs: mes en curso (ultimo con datos), ultimo dia, mes anterior completo
+  var last=cov[1], lym=last.slice(0,7), cur=M[lym]||{tot:0,u:0,days:{}};
+  var y=+lym.slice(0,4), mo=+lym.slice(5,7), dl=+last.slice(8,10), ndays=dim(y,mo);
+  var lastDay=0; SS.forEach(function(s){ if(s.days[last]) lastDay+=s.days[last][0]; });
+  var pm=mo===1?(y-1)+"-12":y+"-"+String(mo-1).padStart(2,"0"), prev=M[pm];
+  var k=document.getElementById("kpis"); k.innerHTML="";
+  function kpi(l,v,s){k.insertAdjacentHTML("beforeend",'<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>');}
+  kpi(MES[mo-1]+" "+y, usd(cur.tot), (dl<ndays?"al día "+dl+" de "+ndays:"mes completo")+" · "+Math.round(cur.u).toLocaleString("en-US")+" uds");
+  kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
+  if(prev) kpi(MES[(mo+10)%12]+" "+(mo===1?y-1:y), usd(prev.tot), Math.round(prev.u).toLocaleString("en-US")+" uds · mes completo");
+  kpi("Promedio diario", usd(cur.tot/Math.max(1,dl)), MES[mo-1]+" · "+dl+" días");
+
+  // lista de meses
+  var box=document.getElementById("months"); box.innerHTML="";
+  yms.forEach(function(ym){
+    var m=M[ym], yy=+ym.slice(0,4), mm=+ym.slice(5,7), n=dim(yy,mm);
+    var endIso=ym+"-"+String(n).padStart(2,"0"), startIso=ym+"-01";
+    var incompleto = cov[1] < endIso || cov[0] > startIso;
+    var hasta = cov[1] < endIso ? +cov[1].slice(8,10) : n;
+    var desde = cov[0] > startIso ? +cov[0].slice(8,10) : 1;
+    var el=document.createElement("div"); el.className="month"+(ym===lym?" open":"");
+    var sub = incompleto ? ("del "+desde+" al "+hasta) : (n+" días");
+    sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
+    var h='<button class="mhead" type="button" aria-expanded="'+(ym===lym)+'"><div class="mname"><b>'+MES[mm-1]+' '+yy+
+      (incompleto?'<span class="pill">parcial</span>':'')+'</b><span>'+sub+'</span></div><div class="mtot">'+usd(m.tot)+
+      '</div><svg class="caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></button>';
+    if(SS.length>1){
+      h+='<div class="bars">'+SS.map(function(s){return '<i class="'+s.id+'" style="width:'+(100*(m.by[s.id]||0)/m.tot).toFixed(1)+'%"></i>';}).join("")+'</div>';
+      h+='<div class="legend">'+SS.map(function(s){return '<span><span class="dot '+s.id+'"></span>'+s.id+' <b>'+usd(m.by[s.id]||0)+'</b></span>';}).join("")+'</div>';
+    }
+    // dias
+    var ds=Object.keys(m.days).sort().reverse();
+    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':'<th>Uds</th><th>Venta</th>')+'</tr></thead><tbody>';
+    ds.forEach(function(d){
+      var dd=m.days[d], tot=0, u=0; Object.keys(dd).forEach(function(id){tot+=dd[id][0];u+=dd[id][1];});
+      var w=dow(d);
+      t+='<tr class="'+(w===0||w===6?"wknd":"")+'"><td>'+(+d.slice(8,10))+'</td><td class="dow">'+DOW[w]+'</td>';
+      if(SS.length>1){ SS.forEach(function(s){ t+= dd[s.id]?'<td>'+usd(dd[s.id][0])+'</td>':'<td class="z">–</td>'; }); t+='<td class="tot">'+usd(tot)+'</td>'; }
+      else t+='<td>'+Math.round(u)+'</td><td class="tot">'+usd(tot)+'</td>';
+      t+='</tr>';
+    });
+    t+='</tbody></table></div>';
+    el.innerHTML=h+t;
+    el.querySelector(".mhead").onclick=function(){var o=el.classList.toggle("open");this.setAttribute("aria-expanded",String(o));};
+    box.appendChild(el);
+  });
+
+  var f=document.getElementById("foot");
+  f.innerHTML=(f.textContent.indexOf("Sin conexión")===0?f.textContent+"<br>":"")+
+    "Venta neta en USD, todos los canales (tienda + ecommerce). Actualizado "+DATA.gen+".<br>"+
+    '<button type="button" id="lock">Cerrar sesión</button> · <a href="../" style="color:inherit">Dashboards completos</a>';
+  document.getElementById("lock").onclick=function(){ls("ixpw",null);ls("ixmacro",null);location.reload();};
+}
+
+// arranque
+(function(){var g=ls("ixpw"); if(g) intentar(g,true);})();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
+</script></body></html>

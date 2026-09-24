@@ -101,6 +101,23 @@ if faltan:
     print("\nFALTAN (no se cifraron):")
     for f in faltan: print("   ", f)
 
+# ------------------------------------------ app movil: totales por dia cifrados
+# build-ventas-macro.py (en IX) resume los mismos Ventas_*.xlsx en un JSON de
+# unos KB; la app en app/ lo baja, lo descifra con la misma clave y muestra
+# los totales por mes y por dia de las 3 tiendas.
+_macro_py = os.path.join(IX, "build-ventas-macro.py")
+_macro_js = os.path.join(IX, "ventas-macro.json")
+if os.path.exists(_macro_py):
+    r = subprocess.run([sys.executable, _macro_py], capture_output=True, text=True)
+    if r.returncode != 0:
+        print("  AVISO build-ventas-macro.py fallo: " + (r.stderr or r.stdout)[-800:])
+if os.path.exists(_macro_js):
+    blob = cifrar(open(_macro_js, "rb").read())
+    open(os.path.join(HERE, "ventas-macro.enc"), "wb").write(blob)
+    print(f"  {'ventas-macro.enc':<24} {len(blob)/1024:>5.1f} KB cifrado   (app movil)")
+else:
+    print("  AVISO: no hay ventas-macro.json, la app movil no se actualiza")
+
 # sonda: permite validar la clave sin bajar 4 MB primero
 open(os.path.join(HERE, "crypt.json"), "w", encoding="utf-8").write(json.dumps({
     "salt": salt.hex(), "iter": ITER,
