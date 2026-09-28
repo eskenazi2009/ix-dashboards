@@ -1,15 +1,15 @@
 name: Ventas IX (GT, SV, RD)
 
 # Sin depender de ninguna PC. Panamá = UTC-5 todo el año.
-#  1) 01:30 UTC (8:30 pm Panamá): PEDIR al portal TotalCommerce los exports de los
+#  1) 02:30 UTC (9:30 pm Panamá): PEDIR al portal TotalCommerce los exports de los
 #     últimos 3 días para las 3 cuentas. El portal contesta por correo a Outlook.
-#  2) 9:00 pm Panamá: la rutina de Claude lee esos correos (conector Microsoft 365),
+#  2) 10:00 pm Panamá: la rutina de Claude lee esos correos (conector Microsoft 365),
 #     saca los enlaces .xlsx y los deja cifrados en inbox/ (cloud/inbox.py), con push.
 #  3) Ese push dispara este workflow otra vez: PROCESAR el inbox = bajar los Excel,
 #     actualizar ventas-ix.enc y ventas-macro.enc y borrar el sobre.
 on:
   schedule:
-    - cron: "30 1 * * *"
+    - cron: "30 2 * * *"
   push:
     paths:
       - "inbox/**"
