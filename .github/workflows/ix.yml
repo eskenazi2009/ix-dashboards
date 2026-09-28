@@ -1,0 +1,69 @@
+name: Ventas IX (GT, SV, RD)
+
+# Sin depender de ninguna PC. Panamá = UTC-5 todo el año.
+#  1) 01:30 UTC (8:30 pm Panamá): PEDIR al portal TotalCommerce los exports de los
+#     últimos 3 días para las 3 cuentas. El portal contesta por correo a Outlook.
+#  2) 9:00 pm Panamá: la rutina de Claude lee esos correos (conector Microsoft 365),
+#     saca los enlaces .xlsx y los deja cifrados en inbox/ (cloud/inbox.py), con push.
+#  3) Ese push dispara este workflow otra vez: PROCESAR el inbox = bajar los Excel,
+#     actualizar ventas-ix.enc y ventas-macro.enc y borrar el sobre.
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  push:
+    paths:
+      - "inbox/**"
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: "pedir | procesar"
+        type: choice
+        options: [procesar, pedir]
+        default: procesar
+      dias:
+        description: "pedir: cuántos días hacia atrás (incluye hoy)"
+        default: "3"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-sitio
+  cancel-in-progress: false
+
+jobs:
+  ix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet requests cryptography openpyxl
+
+      - name: Pedir exports al portal
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.accion == 'pedir')
+        env:
+          DIAS: ${{ inputs.dias || '3' }}
+        run: |
+          HOY=$(TZ=America/Panama date +%F)
+          DESDE=$(TZ=America/Panama date -d "$HOY - $((DIAS-1)) days" +%F)
+          python cloud/sync_ix.py pedir --desde "$DESDE" --hasta "$HOY"
+
+      - name: Procesar inbox
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.accion == 'procesar')
+        env:
+          IX_CLAVE: ${{ secrets.IX_CLAVE }}
+          INBOX_PRIV: ${{ secrets.INBOX_PRIV }}
+        run: python cloud/procesar_inbox.py
+
+      - name: Publicar
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.accion == 'procesar')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A inbox ventas-ix.enc ventas-macro.enc
+          git diff --cached --quiet && echo "sin cambios" && exit 0
+          git commit -m "Ventas IX (portal) $(TZ=America/Panama date '+%Y-%m-%d %H:%M')"
+          git pull --rebase -X theirs || true
+          git push
