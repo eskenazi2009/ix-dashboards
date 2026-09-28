@@ -128,7 +128,32 @@ if os.path.exists(_macro_py):
     r = subprocess.run([sys.executable, _macro_py], capture_output=True, text=True)
     if r.returncode != 0:
         print("  AVISO build-ventas-macro.py fallo: " + (r.stderr or r.stdout)[-800:])
+# IX (GT/SV/RD): el historial tambien vive cifrado en el repo (ventas-ix.enc) y lo
+# alimenta la rutina de Claude en la nube (cloud/sync_ix.py) cada noche. Aqui se
+# MEZCLA: los dias que esta PC tiene en sus Excel mandan; los que no, se toman de
+# la nube. Y se re-escribe ventas-ix.enc con la union, para que la nube tampoco
+# pierda lo que bajo la PC.
+_ix_enc = os.path.join(HERE, "ventas-ix.enc")
 if os.path.exists(_macro_js):
+    macro = json.load(open(_macro_js, encoding="utf-8"))
+    ix = {"days": {}, "cov": {}}
+    if os.path.exists(_ix_enc):
+        _b = open(_ix_enc, "rb").read()
+        ix = json.loads(aes.decrypt(_b[:12], _b[12:], None).decode("utf-8"))
+    for st in macro["stores"]:
+        cid = st["id"]
+        if cid not in ("GT", "SV", "RD"): continue
+        nube = {d: v[cid] for d, v in ix["days"].items() if cid in v}
+        union = dict(nube); union.update(st["days"])          # PC manda donde hay ambos
+        st["days"] = dict(sorted(union.items()))
+        c = ix["cov"].get(cid)
+        st["cov"] = [min(st["cov"][0], c[0]), max(st["cov"][1], c[1])] if c else st["cov"]
+        for d, v in st["days"].items(): ix["days"].setdefault(d, {})[cid] = v
+        ix["cov"][cid] = list(st["cov"])
+        print(f"  IX {cid}: {len(st['days'])} dias (PC + nube), cobertura {st['cov'][0]} a {st['cov'][1]}")
+    ix["days"] = dict(sorted(ix["days"].items()))
+    open(_ix_enc, "wb").write(cifrar(json.dumps(ix, ensure_ascii=False, separators=(",", ":")).encode("utf-8")))
+    json.dump(macro, open(_macro_js, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     blob = cifrar(open(_macro_js, "rb").read())
     open(os.path.join(HERE, "ventas-macro.enc"), "wb").write(blob)
     print(f"  {'ventas-macro.enc':<24} {len(blob)/1024:>5.1f} KB cifrado   (app movil)")
