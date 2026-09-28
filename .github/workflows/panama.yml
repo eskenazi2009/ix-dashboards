@@ -37,7 +37,7 @@ jobs:
           FUP_USER: ${{ secrets.FUP_USER }}
           FUP_PASS: ${{ secrets.FUP_PASS }}
           # la corrida de las 02:00 UTC (9 pm Panamá) incluye el día en curso
-          INCLUIR_HOY: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 2 * * *') || inputs.incluir_hoy == true ? '1' : '0' }}
+          INCLUIR_HOY: ${{ ((github.event_name == 'schedule' && github.event.schedule == '0 2 * * *') || (github.event_name == 'workflow_dispatch' && inputs.incluir_hoy)) && '1' || '0' }}
         run: python cloud/sync_panama.py
       - name: Publicar
         run: |
