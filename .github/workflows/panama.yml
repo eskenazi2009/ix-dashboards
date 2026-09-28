@@ -1,0 +1,50 @@
+name: Ventas Panamá desde FollowUP
+
+# Corre en GitHub (no depende de ninguna PC): sincroniza las 6 tiendas de Panamá
+# y actualiza los .enc del sitio. Horas en UTC: Panamá es UTC-5 todo el año.
+#   11:00 UTC = 6:00 am Panamá  -> cierra AYER (definitivo)
+#   02:00 UTC = 9:00 pm Panamá  -> guarda HOY provisional
+on:
+  schedule:
+    - cron: "0 11 * * *"
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      incluir_hoy:
+        description: "Incluir el día en curso (provisional)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-sitio
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet requests cryptography
+      - name: Sincronizar FollowUP
+        env:
+          IX_CLAVE: ${{ secrets.IX_CLAVE }}
+          FUP_USER: ${{ secrets.FUP_USER }}
+          FUP_PASS: ${{ secrets.FUP_PASS }}
+          # la corrida de las 02:00 UTC (9 pm Panamá) incluye el día en curso
+          INCLUIR_HOY: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 2 * * *') || inputs.incluir_hoy == true ? '1' : '0' }}
+        run: python cloud/sync_panama.py
+      - name: Publicar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ventas-panama.enc ventas-macro.enc
+          git diff --cached --quiet && echo "sin cambios" && exit 0
+          git commit -m "Ventas Panamá (FollowUP) $(TZ=America/Panama date '+%Y-%m-%d %H:%M')"
+          git pull --rebase -X theirs || true
+          git push

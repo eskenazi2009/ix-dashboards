@@ -105,14 +105,22 @@ if faltan:
 # build-ventas-macro.py (en IX) resume los mismos Ventas_*.xlsx en un JSON de
 # unos KB; la app en app/ lo baja, lo descifra con la misma clave y muestra
 # los totales por mes y por dia de las 3 tiendas.
-# Panama: primero se sincronizan las ventas de ayer desde FollowUP (si falla, se
-# publica igual con lo que haya y se avisa)
-_fup_py = os.path.join(IX, "fup-ventas-panama.py")
-if os.path.exists(_fup_py):
-    r = subprocess.run([sys.executable, _fup_py], capture_output=True, text=True)
-    print("  " + (r.stdout.strip().splitlines() or ["FollowUP: sin salida"])[0])
-    if r.returncode != 0:
-        print("  AVISO fup-ventas-panama.py fallo: " + (r.stderr or r.stdout)[-600:])
+# Panama: el historial vive CIFRADO en el repo (ventas-panama.enc) y lo actualiza
+# GitHub Actions dos veces al dia desde FollowUP (cloud/sync_panama.py), sin
+# depender de esta PC. Aqui solo se trae lo ultimo del repo, se descifra a
+# IXentas-panama.json (fuera del repo) y build-ventas-macro.py lo usa.
+if os.path.isdir(os.path.join(HERE, ".git")):
+    r = subprocess.run(["git", "pull", "--rebase", "--autostash", "-q"], cwd=HERE, capture_output=True, text=True)
+    print("  git pull:", "ok" if r.returncode == 0 else "FALLO " + (r.stderr or r.stdout).strip()[-300:])
+_pan_enc = os.path.join(HERE, "ventas-panama.enc")
+_pan_js = os.path.join(IX, "ventas-panama.json")
+if os.path.exists(_pan_enc):
+    _b = open(_pan_enc, "rb").read()
+    open(_pan_js, "w", encoding="utf-8").write(aes.decrypt(_b[:12], _b[12:], None).decode("utf-8"))
+    print("  ventas-panama.json       tomado del repo (cifrado)")
+elif os.path.exists(_pan_js):
+    open(_pan_enc, "wb").write(cifrar(open(_pan_js, "rb").read()))
+    print("  ventas-panama.enc        creado desde el json local (primera vez)")
 
 _macro_py = os.path.join(IX, "build-ventas-macro.py")
 _macro_js = os.path.join(IX, "ventas-macro.json")
