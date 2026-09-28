@@ -105,6 +105,15 @@ if faltan:
 # build-ventas-macro.py (en IX) resume los mismos Ventas_*.xlsx en un JSON de
 # unos KB; la app en app/ lo baja, lo descifra con la misma clave y muestra
 # los totales por mes y por dia de las 3 tiendas.
+# Panama: primero se sincronizan las ventas de ayer desde FollowUP (si falla, se
+# publica igual con lo que haya y se avisa)
+_fup_py = os.path.join(IX, "fup-ventas-panama.py")
+if os.path.exists(_fup_py):
+    r = subprocess.run([sys.executable, _fup_py], capture_output=True, text=True)
+    print("  " + (r.stdout.strip().splitlines() or ["FollowUP: sin salida"])[0])
+    if r.returncode != 0:
+        print("  AVISO fup-ventas-panama.py fallo: " + (r.stderr or r.stdout)[-600:])
+
 _macro_py = os.path.join(IX, "build-ventas-macro.py")
 _macro_js = os.path.join(IX, "ventas-macro.json")
 if os.path.exists(_macro_py):

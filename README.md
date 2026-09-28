@@ -25,6 +25,10 @@ Los datos salen de `ventas-macro.enc` (≈18 KB): `publish.py` corre `../build-v
 que resume los mismos `Ventas_*.xlsx` de los dashboards en totales por día y tienda, y lo cifra
 con la misma clave. Se actualiza solo cada vez que corre `descargar-inventarios-ix.ps1`.
 
+Las 6 tiendas de Panamá (NB Albrook, Dorado, Metro Mall, Multiplaza; RB Albrook, Multiplaza) salen de
+FollowUP (`../fup-ventas-panama.py`, credenciales cifradas fuera del repo); antes del 25/09/2026 el
+histórico viene del reporte diario de Jorge Peraza.
+
 ## Sobre el cifrado
 
 Este repo es público, así que los dashboards **no** se suben en claro: van como `.enc`
