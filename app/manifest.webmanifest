@@ -1,6 +1,6 @@
 {
-  "name": "Ventas IX",
-  "short_name": "Ventas IX",
+  "name": "Ventas",
+  "short_name": "Ventas",
   "description": "Total de ventas por mes y por día de Running Balboa Guatemala, New Balance El Salvador y New Balance Dominicana.",
   "start_url": "./",
   "scope": "./",
