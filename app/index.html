@@ -190,7 +190,7 @@ function stores(){return STORE==="ALL"?DATA.stores:DATA.stores.filter(function(s
 function render(){
   var SS=stores(), cov=[null,null];
   SS.forEach(function(s){ cov[0]=!cov[0]||s.cov[0]<cov[0]?s.cov[0]:cov[0]; cov[1]=!cov[1]||s.cov[1]>cov[1]?s.cov[1]:cov[1]; });
-  document.getElementById("asof").textContent=(SS[0].name?SS[0].brand+" "+SS[0].name+" · "+SS[0].country+" · ":"")+"Datos al "+fdate(cov[1]);
+  document.getElementById("asof").textContent="Datos al "+fdate(cov[1]);
 
   // chips
   var ch=document.getElementById("chips"); ch.innerHTML="";
