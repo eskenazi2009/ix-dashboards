@@ -7,9 +7,8 @@ name: Ventas IX (GT, SV, RD)
 #     saca los enlaces .xlsx y los deja cifrados en inbox/ (cloud/inbox.py), con push.
 #  3) Ese push dispara este workflow otra vez: PROCESAR el inbox = bajar los Excel,
 #     actualizar ventas-ix.enc y ventas-macro.enc y borrar el sobre.
+# Sin cron propio: GitHub lo corría con horas de atraso. Lo dispara la rutina de Claude (10 pm).
 on:
-  schedule:
-    - cron: "30 2 * * *"
   push:
     paths:
       - "inbox/**"
@@ -42,7 +41,7 @@ jobs:
       - run: pip install --quiet requests cryptography openpyxl
 
       - name: Pedir exports al portal
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.accion == 'pedir')
+        if: github.event_name == 'workflow_dispatch' && inputs.accion == 'pedir'
         env:
           DIAS: ${{ inputs.dias || '3' }}
         run: |

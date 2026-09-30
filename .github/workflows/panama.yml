@@ -5,9 +5,9 @@ name: Ventas Panamá desde FollowUP
 #   04:30 UTC = 11:30 pm Panamá -> HOY con las tiendas ya cerradas (y re-sincroniza
 #   los días anteriores). La dispara la rutina de Claude "Ventas Panamá → app (11:30 pm)";
 #   este cron queda solo de respaldo porque GitHub lo atrasa.
+# Sin cron propio: GitHub lo corría con horas de atraso (a las 5:36 am escribió el día en curso
+# casi en cero). Lo dispara la rutina de Claude "Ventas Panamá → app (11:30 pm)".
 on:
-  schedule:
-    - cron: "30 4 * * *"
   workflow_dispatch:
     inputs:
       incluir_hoy:
@@ -37,7 +37,7 @@ jobs:
           FUP_USER: ${{ secrets.FUP_USER }}
           FUP_PASS: ${{ secrets.FUP_PASS }}
           # la corrida programada (11:30 pm Panamá) incluye el día en curso
-          INCLUIR_HOY: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.incluir_hoy)) && '1' || '0' }}
+          INCLUIR_HOY: ${{ inputs.incluir_hoy && '1' || '0' }}
         run: python cloud/sync_panama.py
       - name: Publicar
         run: |
