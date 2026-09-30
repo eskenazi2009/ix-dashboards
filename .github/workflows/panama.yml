@@ -2,12 +2,11 @@ name: Ventas Panamá desde FollowUP
 
 # Corre en GitHub (no depende de ninguna PC): sincroniza las 6 tiendas de Panamá
 # y actualiza los .enc del sitio. Horas en UTC: Panamá es UTC-5 todo el año.
-#   23:10 UTC = 6:10 pm Panamá  -> HOY (parcial) + cierra AYER (definitivo)
-#   04:30 UTC = 11:30 pm Panamá -> HOY con las tiendas ya cerradas
-# Ambas corridas incluyen el día en curso; la siguiente corrida lo re-escribe.
+#   04:30 UTC = 11:30 pm Panamá -> HOY con las tiendas ya cerradas (y re-sincroniza
+#   los días anteriores). La dispara la rutina de Claude "Ventas Panamá → app (11:30 pm)";
+#   este cron queda solo de respaldo porque GitHub lo atrasa.
 on:
   schedule:
-    - cron: "10 23 * * *"
     - cron: "30 4 * * *"
   workflow_dispatch:
     inputs:
@@ -37,7 +36,7 @@ jobs:
           IX_CLAVE: ${{ secrets.IX_CLAVE }}
           FUP_USER: ${{ secrets.FUP_USER }}
           FUP_PASS: ${{ secrets.FUP_PASS }}
-          # las corridas programadas (6:10 pm y 11:30 pm Panamá) incluyen el día en curso
+          # la corrida programada (11:30 pm Panamá) incluye el día en curso
           INCLUIR_HOY: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.incluir_hoy)) && '1' || '0' }}
         run: python cloud/sync_panama.py
       - name: Publicar
