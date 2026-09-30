@@ -230,9 +230,11 @@ function render(){
   yms.forEach(function(ym){
     var m=M[ym], yy=+ym.slice(0,4), mm=+ym.slice(5,7), n=dim(yy,mm);
     var endIso=ym+"-"+String(n).padStart(2,"0"), startIso=ym+"-01";
-    var incompleto = cov[1] < endIso || cov[0] > startIso;
-    var hasta = cov[1] < endIso ? +cov[1].slice(8,10) : n;
-    var desde = cov[0] > startIso ? +cov[0].slice(8,10) : 1;
+    // "parcial" solo cuando el mes aun no termino de cargarse (datos hasta antes del ultimo dia);
+    // un mes que empieza tarde (tienda cerrada el 1, apertura a mitad de mes) NO es parcial.
+    var incompleto = cov[1] < endIso;
+    var hasta = incompleto ? +cov[1].slice(8,10) : n;
+    var desde = 1;
     var el=document.createElement("div"); el.className="month";
     var sub = incompleto ? ("del "+desde+" al "+hasta) : (n+" días");
     if(m.hasU) sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
@@ -262,8 +264,8 @@ function render(){
 
   var f=document.getElementById("foot");
   f.innerHTML=(f.textContent.indexOf("Sin conexión")===0?f.textContent+"<br>":"")+
-    "Venta neta en USD sin impuestos. IX: tienda + ecommerce. Panamá: del reporte diario de Jorge Peraza. Actualizado "+DATA.gen+".<br>"+
-    '<button type="button" id="lock">Cerrar sesión</button> · <a href="../" style="color:inherit">Dashboards completos</a>';
+    "Ventas netas en USD sin impuestos.<br>Última actualización: "+DATA.gen+"<br>"+
+    '<button type="button" id="lock">Cerrar sesión</button>';
   document.getElementById("lock").onclick=function(){ls("ixpw",null);ls("ixmacro",null);location.reload();};
 }
 
