@@ -21,7 +21,7 @@ on:
         options: [procesar, pedir]
         default: procesar
       dias:
-        description: "pedir: cuántos días hacia atrás (incluye hoy)"
+        description: "pedir: cuántos días hacia atrás, terminando AYER"
         default: "3"
 
 permissions:
@@ -46,15 +46,18 @@ jobs:
         env:
           DIAS: ${{ inputs.dias || '3' }}
         run: |
+          # El portal carga las ventas de un dia durante la noche siguiente: a las 10 pm el
+          # dia en curso todavia sale en cero. Por eso se pide hasta AYER (verificado 29-sep).
           HOY=$(TZ=America/Panama date +%F)
-          DESDE=$(TZ=America/Panama date -d "$HOY - $((DIAS-1)) days" +%F)
-          python cloud/sync_ix.py pedir --desde "$DESDE" --hasta "$HOY"
-          mkdir -p inbox && echo "{\"desde\":\"$DESDE\",\"hasta\":\"$HOY\"}" > inbox/pedido.json
+          HASTA=$(TZ=America/Panama date -d "$HOY - 1 day" +%F)
+          DESDE=$(TZ=America/Panama date -d "$HASTA - $((DIAS-1)) days" +%F)
+          python cloud/sync_ix.py pedir --desde "$DESDE" --hasta "$HASTA"
+          mkdir -p inbox && echo "{\"desde\":\"$DESDE\",\"hasta\":\"$HASTA\"}" > inbox/pedido.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add inbox/pedido.json
           if git diff --cached --quiet; then echo "rango sin cambios"; else
-            git commit -qm "IX: rango pedido $DESDE a $HOY [skip ci]" && git pull --rebase -q && git push -q; fi
+            git commit -qm "IX: rango pedido $DESDE a $HASTA [skip ci]" && git pull --rebase -q && git push -q; fi
 
       - name: Procesar inbox
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.accion == 'procesar')
