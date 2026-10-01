@@ -1,7 +1,7 @@
 // Service worker de Ventas IX: guarda la cascara de la app para que abra sin senal.
 // Los datos (../ventas-macro.enc) NUNCA pasan por aqui: la pagina los pide con
 // cache:"no-store" y guarda su propia copia descifrada en localStorage.
-var CACHE = "ventas-ix-v10";
+var CACHE = "ventas-ix-v11";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./nb-192.png", "./nb-512.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));

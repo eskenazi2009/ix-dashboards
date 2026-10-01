@@ -10,7 +10,8 @@ Entradas (variables de entorno, secrets del repo):
   INCLUIR_HOY=1         guarda tambien el dia en curso (corrida de las 9 pm, provisional)
 
 Archivos del repo que toca (todos cifrados AES-256-GCM, misma llave que los dashboards):
-  ventas-panama.enc   historial de Panama {"stores":..., "days":{fecha:{tienda:[neto, uds]}}}
+  ventas-panama.enc   historial de Panama {"stores":..., "days":{fecha:{tienda:[neto, uds, tickets]}}}
+                      (los dias que vienen del reporte de Jorge Peraza son solo un numero: neto)
   ventas-macro.enc    datos de la app: se reemplazan solo las tiendas de Panama (country
                       "Panamá"); las de IX (GT/SV/RD) quedan como las dejo la PC.
 Nada se escribe en claro. HOY se calcula en hora de Panama.
@@ -27,8 +28,11 @@ STORES = {6: "NBA", 4: "NBD", 3: "NBM", 1: "NBP", 5: "RBA", 2: "RBP"}   # id Fol
 META = {"NBA": ("New Balance", "Albrook"), "NBD": ("New Balance", "Dorado Mall"),
         "NBM": ("New Balance", "Metro Mall"), "NBP": ("New Balance", "Multiplaza"),
         "RBA": ("Running Balboa", "Albrook"), "RBP": ("Running Balboa", "Multiplaza")}
-AMOUNT, QTY = 11, 10          # columnas de /api/v1/daily_event_sale_facts.json
-FUP_DESDE = datetime.date(2026, 9, 25)   # antes: historico de Jorge Peraza, no se toca
+AMOUNT, QTY, TICKETS = 11, 10, 9   # columnas de /api/v1/daily_event_sale_facts.json (amount, quantity, sales)
+FUP_DESDE = datetime.date(2026, 1, 1)    # se toma todo lo que FollowUP tenga (venta, unidades y tickets)
+# Rango que NO se toca: septiembre 1-24 de 2026 queda con el reporte de Jorge Peraza hasta que
+# IX/FollowUP corrijan ese mes (Raymond avisa). Para liberarlo, vaciar esta lista.
+PROTEGIDO = [("2026-09-01", "2026-09-24")]
 TZ = ZoneInfo("America/Panama")
 
 # ------------------------------------------------------------------ cifrado
@@ -59,19 +63,33 @@ def main():
     hoy = datetime.datetime.now(TZ).date()
     hasta = hoy if incluir_hoy else hoy - datetime.timedelta(days=1)
     rows = fetch_followup(os.environ["FUP_USER"], os.environ["FUP_PASS"])
-    por_dia = {}
+    # por dia y tienda: [venta neta, unidades, tickets]
+    por_dia, primera = {}, {}
     for r in rows:
         d = datetime.datetime.fromtimestamp(r[1], datetime.timezone.utc).date(); k = STORES.get(r[2])
         if not k or d < FUP_DESDE or d > hasta: continue
-        por_dia.setdefault(d, {})[k] = [round(float(r[AMOUNT] or 0), 2), int(r[QTY] or 0)]
+        por_dia.setdefault(d, {})[k] = [round(float(r[AMOUNT] or 0), 2), int(r[QTY] or 0), int(r[TICKETS] or 0)]
+        if k not in primera or d < primera[k]: primera[k] = d     # desde cuando FollowUP tiene la tienda
 
-    # ---- historial cifrado de Panama
+    # ---- historial de Panama
     pan_path = os.path.join(SITE, "ventas-panama.enc")
     pan = dec(pan_path)
     nuevos = cambiados = 0
     for d in sorted(por_dia):
-        fila = {k: por_dia[d].get(k, [0.0, 0]) for k in STORES.values()}
         key = d.isoformat()
+        if any(a <= key <= b for a, b in PROTEGIDO): continue        # se deja como esta (ver PROTEGIDO)
+        fila = dict(pan["days"].get(key, {}))
+        for k in STORES.values():
+            prev = fila.get(k)
+            prev_net = prev[0] if isinstance(prev, list) else prev
+            if k in por_dia[d]:
+                # FollowUP trae filas en cero para tiendas que aun no habia conectado (ej. NB Albrook
+                # hasta jun-2026): si FollowUP dice 0 y el historico de Jorge tiene venta, manda Jorge.
+                if por_dia[d][k][0] == 0 and prev_net: continue
+                fila[k] = por_dia[d][k]
+            elif k in fila: pass                                   # sin fila en FollowUP: se conserva lo que haya
+                                                                   # (historico de Jorge; FollowUP tiene huecos en may-jun)
+            elif k in primera and d >= primera[k]: fila[k] = [0.0, 0, 0]   # tienda ya en FollowUP, dia sin venta, sin historico
         if key not in pan["days"]: nuevos += 1
         elif pan["days"][key] != fila: cambiados += 1
         pan["days"][key] = fila
@@ -89,7 +107,7 @@ def main():
         for d, v in pan["days"].items():
             x = v.get(sid)
             if x is None: continue
-            days[d] = [round(x[0], 2), x[1]] if isinstance(x, list) else [round(x, 2), None]
+            days[d] = ([round(x[0], 2)] + list(x[1:3]) + [None] * (3 - len(x))) if isinstance(x, list) else [round(x, 2), None, None]
         if not days: continue
         ds = sorted(days)
         macro["stores"].append(dict(id=sid, brand=brand, country="Panamá", name=name, cov=[ds[0], ds[-1]], days=days))
@@ -99,8 +117,13 @@ def main():
     ult = max(por_dia) if por_dia else None
     print("FollowUP: %d dias (%s a %s) | nuevos %d | cambiados %d | ultimo %s%s"
           % (len(por_dia), FUP_DESDE, hasta, nuevos, cambiados, ult, " (provisional)" if incluir_hoy else ""))
-    if ult: print("  %s total 6 tiendas $%s" % (ult, format(sum(v[0] for v in pan["days"][ult.isoformat()].values()), ",.2f")))
-    if ult and ult < hasta: print("  AVISO: FollowUP aun no tiene datos de %s" % hasta)
+    print("  primera fecha por tienda:", {k: v.isoformat() for k, v in sorted(primera.items())})
+    if ult:
+        f = pan["days"][ult.isoformat()]
+        print("  %s total 6 tiendas $%s | tickets %d" % (ult, format(sum(v[0] for v in f.values()), ",.2f"),
+              sum(v[2] for v in f.values() if isinstance(v, list) and len(v) > 2)))
+    if ult and ult < hasta:
+        print("  AVISO: FollowUP aun no tiene datos de %s" % hasta)
 
 if __name__ == "__main__":
     main()

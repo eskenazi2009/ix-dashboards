@@ -181,6 +181,7 @@ async function cargar(){
 var MES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 var DOW=["dom","lun","mar","mié","jue","vie","sáb"];
 function usd(n){return "$"+Math.round(n).toLocaleString("en-US");}
+function usd2(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fdate(iso){var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
 function dow(iso){var p=iso.split("-");return new Date(+p[0],+p[1]-1,+p[2]).getDay();}
 function dim(y,m){return new Date(y,m,0).getDate();}   // m 1-12
@@ -207,23 +208,29 @@ function render(){
   SS.forEach(function(s){
     Object.keys(s.days).forEach(function(d){
       var ym=d.slice(0,7), v=s.days[d];
-      var m=M[ym]||(M[ym]={tot:0,u:0,by:{},days:{}});
-      m.tot+=v[0]; if(v[1]!=null){m.u+=v[1];m.hasU=true;} m.by[s.id]=(m.by[s.id]||0)+v[0];
+      var m=M[ym]||(M[ym]={tot:0,u:0,t:0,tu:0,tn:0,by:{},days:{}});
+      m.tot+=v[0]; if(v[1]!=null){m.u+=v[1];m.hasU=true;} if(v[2]!=null){m.t+=v[2];m.hasT=true;m.tu+=(v[1]||0);m.tn+=v[0];} m.by[s.id]=(m.by[s.id]||0)+v[0];
       (m.days[d]||(m.days[d]={}))[s.id]=v;
     });
   });
   var yms=Object.keys(M).sort().reverse();
 
   // KPIs: mes en curso (ultimo con datos), ultimo dia, mes anterior completo
-  var last=cov[1], lym=last.slice(0,7), cur=M[lym]||{tot:0,u:0,days:{}};
+  var last=cov[1], lym=last.slice(0,7), cur=M[lym]||{tot:0,u:0,t:0,tu:0,tn:0,days:{}};
   var y=+lym.slice(0,4), mo=+lym.slice(5,7), dl=+last.slice(8,10), ndays=dim(y,mo);
   var lastDay=0; SS.forEach(function(s){ if(s.days[last]) lastDay+=s.days[last][0]; });
   var k=document.getElementById("kpis"); k.innerHTML="";
   function kpi(l,v,s){k.insertAdjacentHTML("beforeend",'<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>');}
   kpi(MES[mo-1]+" "+y, usd(cur.tot), dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
-  if(cur.hasU) kpi("Unidades · "+MES[mo-1], Math.round(cur.u).toLocaleString("en-US")+" uds", dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
-  kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
-  kpi("Promedio diario", usd(cur.tot/Math.max(1,dl)), MES[mo-1]+" · "+dl+" días");
+  if(cur.hasT){
+    kpi("Valor por ticket", cur.t?usd2(cur.tn/cur.t):"–", MES[mo-1]+" · "+cur.t.toLocaleString("en-US")+" tickets");
+    kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
+    kpi("Artículos por ticket", cur.t?(cur.tu/cur.t).toFixed(2):"–", MES[mo-1]+" · "+Math.round(cur.tu).toLocaleString("en-US")+" uds");
+  } else {
+    if(cur.hasU) kpi("Unidades · "+MES[mo-1], Math.round(cur.u).toLocaleString("en-US")+" uds", dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
+    kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
+    kpi("Promedio diario", usd(cur.tot/Math.max(1,dl)), MES[mo-1]+" · "+dl+" días");
+  }
 
   // lista de meses
   var box=document.getElementById("months"); box.innerHTML="";
@@ -237,7 +244,8 @@ function render(){
     var desde = 1;
     var el=document.createElement("div"); el.className="month";
     var sub = incompleto ? ("del "+desde+" al "+hasta) : (n+" días");
-    if(m.hasU) sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
+    if(m.hasT && m.t) sub += " · "+usd2(m.tn/m.t)+"/tkt · "+(m.tu/m.t).toFixed(2)+" art/tkt";
+    else if(m.hasU) sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
     var h='<button class="mhead" type="button" aria-expanded="false"><div class="mname"><b>'+MES[mm-1]+' '+yy+
       (incompleto?'<span class="pill">parcial</span>':'')+'</b><span>'+sub+'</span></div><div class="mtot">'+usd(m.tot)+
       '</div><svg class="caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg></button>';
@@ -247,12 +255,13 @@ function render(){
     }
     // dias
     var ds=Object.keys(m.days).sort().reverse();
-    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':(m.hasU?'<th>Uds</th>':'')+'<th>Venta</th>')+'</tr></thead><tbody>';
+    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':(m.hasT?'<th>Venta</th><th>$/Tkt</th><th>Art/Tkt</th>':(m.hasU?'<th>Uds</th>':'')+'<th>Venta</th>'))+'</tr></thead><tbody>';
     ds.forEach(function(d){
-      var dd=m.days[d], tot=0, u=0; Object.keys(dd).forEach(function(id){tot+=dd[id][0];u+=(dd[id][1]||0);});
+      var dd=m.days[d], tot=0, u=0, tk=0, hasTk=false; Object.keys(dd).forEach(function(id){tot+=dd[id][0];u+=(dd[id][1]||0);if(dd[id][2]!=null){tk+=dd[id][2];hasTk=true;}});
       var w=dow(d);
       t+='<tr class="'+(w===0||w===6?"wknd":"")+'"><td>'+(+d.slice(8,10))+'</td><td class="dow">'+DOW[w]+'</td>';
       if(SS.length>1){ SS.forEach(function(s){ t+= dd[s.id]?'<td>'+usd(dd[s.id][0])+'</td>':'<td class="z">–</td>'; }); t+='<td class="tot">'+usd(tot)+'</td>'; }
+      else if(m.hasT) t+='<td class="tot">'+usd(tot)+'</td>'+(hasTk&&tk?'<td>'+usd2(tot/tk)+'</td><td>'+(u/tk).toFixed(2)+'</td>':'<td class="z">–</td><td class="z">–</td>');
       else t+=(m.hasU?'<td>'+Math.round(u)+'</td>':'')+'<td class="tot">'+usd(tot)+'</td>';
       t+='</tr>';
     });
