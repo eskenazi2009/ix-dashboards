@@ -223,9 +223,9 @@ function render(){
   function kpi(l,v,s){k.insertAdjacentHTML("beforeend",'<div class="kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>');}
   kpi(MES[mo-1]+" "+y, usd(cur.tot), dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
   if(cur.hasT){
-    kpi("Valor por ticket", cur.t?usd2(cur.tn/cur.t):"–", MES[mo-1]+" · "+cur.t.toLocaleString("en-US")+" tickets");
+    kpi("VPT", cur.t?usd2(cur.tn/cur.t):"–", MES[mo-1]+" · "+cur.t.toLocaleString("en-US")+" tickets");
     kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
-    kpi("Artículos por ticket", cur.t?(cur.tu/cur.t).toFixed(2):"–", MES[mo-1]+" · "+Math.round(cur.tu).toLocaleString("en-US")+" uds");
+    kpi("UPT", cur.t?(cur.tu/cur.t).toFixed(2):"–", MES[mo-1]+" · "+Math.round(cur.tu).toLocaleString("en-US")+" uds");
   } else {
     if(cur.hasU) kpi("Unidades · "+MES[mo-1], Math.round(cur.u).toLocaleString("en-US")+" uds", dl<ndays?"al día "+dl+" de "+ndays:"mes completo");
     kpi("Último día · "+fdate(last), usd(lastDay), DOW[dow(last)]);
@@ -244,7 +244,7 @@ function render(){
     var desde = 1;
     var el=document.createElement("div"); el.className="month";
     var sub = incompleto ? ("del "+desde+" al "+hasta) : (n+" días");
-    if(m.hasT && m.t) sub += " · "+usd2(m.tn/m.t)+"/tkt · "+(m.tu/m.t).toFixed(2)+" art/tkt";
+    if(m.hasT && m.t) sub += " · "+usd2(m.tn/m.t)+" VPT · "+(m.tu/m.t).toFixed(2)+" UPT";
     else if(m.hasU) sub += " · "+Math.round(m.u).toLocaleString("en-US")+" uds";
     var h='<button class="mhead" type="button" aria-expanded="false"><div class="mname"><b>'+MES[mm-1]+' '+yy+
       (incompleto?'<span class="pill">parcial</span>':'')+'</b><span>'+sub+'</span></div><div class="mtot">'+usd(m.tot)+
@@ -255,7 +255,7 @@ function render(){
     }
     // dias
     var ds=Object.keys(m.days).sort().reverse();
-    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':(m.hasT?'<th>Venta</th><th>$/Tkt</th><th>Art/Tkt</th>':(m.hasU?'<th>Uds</th>':'')+'<th>Venta</th>'))+'</tr></thead><tbody>';
+    var t='<div class="days"><table><thead><tr><th>Día</th><th></th>'+(SS.length>1?SS.map(function(s){return '<th>'+s.id+'</th>';}).join("")+'<th>Total</th>':(m.hasT?'<th>Venta</th><th>VPT</th><th>UPT</th>':(m.hasU?'<th>Uds</th>':'')+'<th>Venta</th>'))+'</tr></thead><tbody>';
     ds.forEach(function(d){
       var dd=m.days[d], tot=0, u=0, tk=0, hasTk=false; Object.keys(dd).forEach(function(id){tot+=dd[id][0];u+=(dd[id][1]||0);if(dd[id][2]!=null){tk+=dd[id][2];hasTk=true;}});
       var w=dow(d);
