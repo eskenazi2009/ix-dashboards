@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /tmp/d.txt -w '%{http_code}' -X POST * https://api.github.com/repos/eskenazi2009/ix-dashboards/actions/workflows/ix.yml/dispatches *)",
+      "Bash(python3 -m pip install -q cffi)",
+      "Bash(python3 cloud/inbox.py encolar *)",
+      "Bash(git add inbox)",
+      "Bash(git -c user.name='Claude rutina' -c user.email='rutina@ix-dashboards' commit -m *)",
+      "Bash(git fetch -q origin)",
+      "Bash(git rebase origin/main)",
+      "Bash(git rebase --abort)",
+      "Bash(git reset --hard origin/main)",
+      "Bash(git push origin HEAD:main)"
+    ]
+  }
+}
