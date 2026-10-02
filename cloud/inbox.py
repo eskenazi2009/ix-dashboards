@@ -2,7 +2,7 @@
 """
 "Buzon" cifrado entre la rutina de Claude en la nube y GitHub Actions.
 
-La rutina (9 pm Panama) lee por el conector de Microsoft 365 los correos
+La rutina (8 am Panama) lee por el conector de Microsoft 365 los correos
 "Descargable de Ventas" del portal de IX y saca los enlaces .xlsx. No puede
 bajar archivos ni tiene la clave del sitio, asi que deja los enlaces en
 inbox/ix-<sello>.enc, cifrados con la LLAVE PUBLICA (cloud/inbox_pub.pem).

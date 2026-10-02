@@ -129,7 +129,7 @@ if os.path.exists(_macro_py):
     if r.returncode != 0:
         print("  AVISO build-ventas-macro.py fallo: " + (r.stderr or r.stdout)[-800:])
 # IX (GT/SV/RD): el historial tambien vive cifrado en el repo (ventas-ix.enc) y lo
-# alimenta la rutina de Claude en la nube (cloud/sync_ix.py) cada noche. Aqui se
+# alimenta la rutina de Claude en la nube (cloud/sync_ix.py) cada manana (8 am). Aqui se
 # MEZCLA: los dias que esta PC tiene en sus Excel mandan; los que no, se toman de
 # la nube. Y se re-escribe ventas-ix.enc con la union, para que la nube tampoco
 # pierda lo que bajo la PC.

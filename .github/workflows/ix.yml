@@ -1,13 +1,14 @@
 name: Ventas IX (GT, SV, RD)
 
 # Sin depender de ninguna PC. Panamá = UTC-5 todo el año.
-#  1) 02:30 UTC (9:30 pm Panamá): PEDIR al portal TotalCommerce los exports de los
-#     últimos 3 días para las 3 cuentas. El portal contesta por correo a Outlook.
-#  2) 10:00 pm Panamá: la rutina de Claude lee esos correos (conector Microsoft 365),
+#  1) 8:00 am Panamá (13:00 UTC): la rutina de Claude dispara este workflow para PEDIR al
+#     portal TotalCommerce los exports de los últimos 3 días (hasta ayer) para las 3 cuentas.
+#     El portal contesta por correo a Outlook en 3-8 minutos.
+#  2) Unos minutos después, la misma rutina lee esos correos (conector Microsoft 365),
 #     saca los enlaces .xlsx y los deja cifrados en inbox/ (cloud/inbox.py), con push.
 #  3) Ese push dispara este workflow otra vez: PROCESAR el inbox = bajar los Excel,
 #     actualizar ventas-ix.enc y ventas-macro.enc y borrar el sobre.
-# Sin cron propio: GitHub lo corría con horas de atraso. Lo dispara la rutina de Claude (10 pm).
+# Sin cron propio: GitHub lo corría con horas de atraso. Lo dispara la rutina de Claude (8 am).
 on:
   push:
     paths:
@@ -45,8 +46,8 @@ jobs:
         env:
           DIAS: ${{ inputs.dias || '3' }}
         run: |
-          # El portal carga las ventas de un dia durante la noche siguiente: a las 10 pm el
-          # dia en curso todavia sale en cero. Por eso se pide hasta AYER (verificado 29-sep).
+          # El portal carga las ventas de un dia durante la noche siguiente: el dia en curso
+          # todavia sale en cero. Por eso se pide hasta AYER (verificado 29-sep; rutina a las 8 am).
           HOY=$(TZ=America/Panama date +%F)
           HASTA=$(TZ=America/Panama date -d "$HOY - 1 day" +%F)
           DESDE=$(TZ=America/Panama date -d "$HASTA - $((DIAS-1)) days" +%F)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Ventas diarias de las 3 tiendas IX (RB Guatemala, NB El Salvador, NB Dominicana)
-SIN depender de la PC. Lo usa la rutina de Claude en la nube (9 pm Panama) y
+SIN depender de la PC. Lo usa la rutina de Claude en la nube (8 am Panama) y
 tambien sirve a mano.
 
   python cloud/sync_ix.py pedir  --desde YYYY-MM-DD --hasta YYYY-MM-DD [--cuentas GT,SV,RD]
