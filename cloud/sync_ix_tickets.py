@@ -27,7 +27,9 @@ import sync_ix
 
 BASE = "https://ixcomercio.fupbi.com"
 # palabras en el nombre de la tienda (FollowUP) -> cuenta de la app
-PALABRAS = {"GT": ("guatemala", "running"), "SV": ("salvador",), "RD": ("domini",)}
+# Nombres reales en FollowUP (2026-10-08): "Deka 14 Running Balboa" (GT), "Bambu City Center
+# New Balance" (San Salvador, SV), "Santiago Center New Balance" (Santiago, RD).
+PALABRAS = {"GT": ("guatemala", "running", "deka"), "SV": ("salvador", "bambu"), "RD": ("domini", "santiago")}
 TICKETS, QTY, AMOUNT = 9, 10, 11      # columnas de /api/v1/daily_event_sale_facts.json
 FUP_DESDE = datetime.date(2026, 1, 1)
 TZ = ZoneInfo("America/Panama")
@@ -56,7 +58,8 @@ def mapear_tiendas(s):
     for st in stores:
         nombre = str(st.get("name") or st.get("short_name") or "").lower()
         cid = next((c for c, pal in PALABRAS.items() if any(p in nombre for p in pal)), None)
-        print("  tienda FollowUP %s %r -> %s" % (st.get("id"), st.get("name"), cid or "SIN MAPEO"))
+        print("  tienda FollowUP %s %r (pais %s, moneda %s) -> %s" % (st.get("id"), st.get("name"), st.get("country_id"),
+              st.get("currency_id"), cid or "SIN MAPEO"))
         if cid: m[int(st["id"])] = cid
     if not m: raise SystemExit("FollowUP IX: ninguna tienda reconocida; usar FUPIX_STORES=id:GT,id:SV,id:RD")
     return m
@@ -95,8 +98,11 @@ def main():
     port = ix["days"].get(ult, {})
     for cid in ("GT", "SV", "RD"):
         n = tk[ult].get(cid); neto = (port.get(cid) or [None])[0]
-        print("  %s %s: %s tickets | FollowUP $%s | portal $%s" % (ult, cid, n, format(venta[ult].get(cid, 0), ",.2f"),
-              format(neto, ",.2f") if neto is not None else "-"))
+        fv = venta[ult].get(cid, 0)
+        # FollowUP suma en moneda local (GT quetzales, RD pesos, SV dolares); la razon vs el portal (USD)
+        # debe parecerse al tipo de cambio: ~7.7 GT, ~1 SV, ~60 RD. Si no, el mapeo de tiendas esta mal.
+        print("  %s %s: %s tickets | FollowUP %s (moneda local) | portal $%s | razon %s" % (ult, cid, n, format(fv, ",.2f"),
+              format(neto, ",.2f") if neto is not None else "-", format(fv / neto, ".2f") if neto else "-"))
     if ult < hasta.isoformat(): print("  AVISO: FollowUP aun no tiene datos de %s" % hasta)
 
 if __name__ == "__main__":
