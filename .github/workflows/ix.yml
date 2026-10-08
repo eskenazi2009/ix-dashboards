@@ -7,6 +7,7 @@ name: Ventas IX (GT, SV, RD)
 #     saca los enlaces .xlsx y los deja cifrados en inbox/ (cloud/inbox.py), con push.
 #  3) Ese push dispara este workflow otra vez: PROCESAR el inbox = bajar los Excel,
 #     actualizar ventas-ix.enc y ventas-macro.enc y borrar el sobre.
+#  4) Tickets por dia desde FollowUP de IX (cloud/sync_ix_tickets.py) -> VPT/UPT.
 # Sin cron propio: GitHub lo corría con horas de atraso. Lo dispara la rutina de Claude (10 pm).
 on:
   push:
@@ -15,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       accion:
-        description: "pedir | procesar"
+        description: "pedir | procesar | tickets (solo FollowUP IX)"
         type: choice
-        options: [procesar, pedir]
+        options: [procesar, pedir, tickets]
         default: procesar
       dias:
         description: "pedir: cuántos días hacia atrás, terminando AYER"
@@ -65,8 +66,21 @@ jobs:
           INBOX_PRIV: ${{ secrets.INBOX_PRIV }}
         run: python cloud/procesar_inbox.py
 
+      # Tickets por dia desde FollowUP de IX (ixcomercio.fupbi.com) -> VPT y UPT en la app.
+      # Si los secrets FUPIX_USER/FUPIX_PASS no existen, el paso solo avisa y no hace nada.
+      # Si FollowUP falla, no bloquea la publicacion de las ventas del portal.
+      - name: Tickets IX (FollowUP)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.accion != 'pedir')
+        continue-on-error: true
+        env:
+          IX_CLAVE: ${{ secrets.IX_CLAVE }}
+          FUPIX_USER: ${{ secrets.FUPIX_USER }}
+          FUPIX_PASS: ${{ secrets.FUPIX_PASS }}
+          FUPIX_STORES: ${{ vars.FUPIX_STORES }}
+        run: python cloud/sync_ix_tickets.py
+
       - name: Publicar
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.accion == 'procesar')
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.accion != 'pedir')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -19,6 +19,7 @@ tambien sirve a mano.
 
 Columnas del export de 44 columnas (0-based): 2 canal, 4 pais, 7 tienda, 8 fecha,
 28 unidades, 39 neto. El neto es sin impuestos; RD viene ya en USD.
+Los tickets por dia (para VPT/UPT) vienen de FollowUP: cloud/sync_ix_tickets.py.
 """
 import datetime, hashlib, io, json, os, re, secrets, sys
 import requests
@@ -107,12 +108,17 @@ def cargar(srcs, rango=None):
         print("  %s: %d dias con venta, cobertura %s a %s, neto $%s" % (cid, len(dias), ra, rb, format(sum(v[0] for v in dias.values()), ",.2f")))
     ix["days"] = dict(sorted(ix["days"].items()))
     enc(aes, ix_path, ix)
-    # ---- app: reemplazar solo las tiendas IX
+    publicar_macro(aes, ix)
+
+def publicar_macro(aes, ix):
+    """Re-arma las tiendas IX dentro de ventas-macro.enc: [neto, uds, tickets].
+    neto/uds vienen del portal (ix["days"]); tickets de FollowUP (ix["tickets"], sync_ix_tickets.py)."""
+    tk = ix.get("tickets", {})
     macro_path = os.path.join(SITE, "ventas-macro.enc")
     macro = dec(aes, macro_path)
     macro["stores"] = [s for s in macro["stores"] if s.get("id") not in CUENTAS]
     for cid, (_p, _c, _k, brand, country) in CUENTAS.items():
-        days = {d: v[cid] for d, v in ix["days"].items() if cid in v}
+        days = {d: list(v[cid][:2]) + [tk.get(d, {}).get(cid)] for d, v in ix["days"].items() if cid in v}
         if not days: continue
         cov = ix["cov"].get(cid) or [min(days), max(days)]
         macro["stores"].insert(0, dict(id=cid, brand=brand, country=country, cov=cov, days=days))

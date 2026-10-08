@@ -145,10 +145,13 @@ if os.path.exists(_macro_js):
         if cid not in ("GT", "SV", "RD"): continue
         nube = {d: v[cid] for d, v in ix["days"].items() if cid in v}
         union = dict(nube); union.update(st["days"])          # PC manda donde hay ambos
-        st["days"] = dict(sorted(union.items()))
         c = ix["cov"].get(cid)
         st["cov"] = [min(st["cov"][0], c[0]), max(st["cov"][1], c[1])] if c else st["cov"]
-        for d, v in st["days"].items(): ix["days"].setdefault(d, {})[cid] = v
+        for d, v in union.items(): ix["days"].setdefault(d, {})[cid] = list(v[:2])
+        # tickets por dia (FollowUP, cloud/sync_ix_tickets.py) viven aparte en ix["tickets"]
+        # y se agregan como tercer valor -> la app calcula VPT y UPT
+        tk = ix.get("tickets", {})
+        st["days"] = {d: list(v[:2]) + [tk.get(d, {}).get(cid)] for d, v in sorted(union.items())}
         ix["cov"][cid] = list(st["cov"])
         print(f"  IX {cid}: {len(st['days'])} dias (PC + nube), cobertura {st['cov'][0]} a {st['cov'][1]}")
     ix["days"] = dict(sorted(ix["days"].items()))
