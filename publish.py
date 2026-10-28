@@ -31,6 +31,31 @@ if not CLAVE:
     sys.exit("Falta la clave: pone IX_CLAVE en el entorno o crea clave.txt en esta carpeta.")
 ITER = 310_000          # PBKDF2-SHA256
 
+# ------------------------------------------- repo: traer lo ultimo ANTES de escribir nada
+# El repo tambien lo escriben un GitHub Action y una rutina en la nube (ventas-ix.enc,
+# ventas-panama.enc, inbox/...). Si se trae lo del repo cuando ya hay archivos generados
+# cambiados en la carpeta, el rebase puede chocar en un .enc binario y quedarse a medias:
+# paso el 26-oct-2026, y durante 3 dias cada corrida commiteo con HEAD suelto y el push
+# fallo sin que nadie lo viera. Por eso: (1) se sincroniza aqui, con el arbol limpio;
+# (2) un rebase a medias o un HEAD suelto se corrigen; (3) si el pull choca, se toma
+# origin/main tal cual y lo nuestro se regenera encima: todo lo local son archivos
+# generados, no hay nada que perder.
+def _git(*a):
+    return subprocess.run(["git", *a], cwd=HERE, capture_output=True, text=True)
+if os.path.isdir(os.path.join(HERE, ".git")):
+    _gd = os.path.join(HERE, ".git")
+    if os.path.isdir(os.path.join(_gd, "rebase-merge")) or os.path.isdir(os.path.join(_gd, "rebase-apply")):
+        _git("rebase", "--abort"); print("  git: habia un rebase a medias, cancelado")
+    if _git("symbolic-ref", "-q", "HEAD").returncode != 0:
+        _git("checkout", "-f", "main"); print("  git: HEAD estaba suelto, de vuelta en main")
+    _r = _git("pull", "--rebase", "--autostash", "-q")
+    if _r.returncode != 0:
+        _git("rebase", "--abort"); _git("fetch", "-q", "origin"); _git("reset", "--hard", "origin/main")
+        print("  git pull: choco (" + (_r.stderr or _r.stdout).strip()[-120:].replace("\n", " ")
+              + "); se tomo origin/main y lo nuestro se regenera encima")
+    else:
+        print("  git pull: ok")
+
 # (id, etiqueta, sublabel, archivo .enc, origen, etiqueta corta para la linea de fechas)
 TABS = [
     ("ventas-rb", "Ventas", "Running Balboa GT", "ventas-rb-gt.enc",
@@ -109,9 +134,7 @@ if faltan:
 # GitHub Actions dos veces al dia desde FollowUP (cloud/sync_panama.py), sin
 # depender de esta PC. Aqui solo se trae lo ultimo del repo, se descifra a
 # IXentas-panama.json (fuera del repo) y build-ventas-macro.py lo usa.
-if os.path.isdir(os.path.join(HERE, ".git")):
-    r = subprocess.run(["git", "pull", "--rebase", "--autostash", "-q"], cwd=HERE, capture_output=True, text=True)
-    print("  git pull:", "ok" if r.returncode == 0 else "FALLO " + (r.stderr or r.stdout).strip()[-300:])
+# (el pull ya se hizo al principio del script, con el arbol limpio)
 _pan_enc = os.path.join(HERE, "ventas-panama.enc")
 _pan_js = os.path.join(IX, "ventas-panama.json")
 if os.path.exists(_pan_enc):
@@ -206,7 +229,8 @@ if "--push" in sys.argv:
     r = subprocess.run(["git", "commit", "-m",
                         "Actualiza dashboards " + datetime.date.today().strftime("%Y-%m-%d")], cwd=HERE)
     if r.returncode == 0:
-        subprocess.run(["git", "push"], cwd=HERE, check=True)
+        # rama explicita: con HEAD suelto "git push" a secas falla en silencio para la tarea
+        subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=HERE, check=True)
         print("\nPush listo.")
     else:
         print("\nNada que commitear.")
