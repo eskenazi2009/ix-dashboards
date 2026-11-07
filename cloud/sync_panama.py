@@ -80,6 +80,8 @@ def main():
         key = d.isoformat()
         if any(a <= key <= b for a, b in PROTEGIDO): continue        # se deja como esta (ver PROTEGIDO)
         fila = dict(pan["days"].get(key, {}))
+        vs = list(por_dia[d].values())
+        todas_cero = all(v[0] == 0 and v[2] == 0 for v in vs) and any(len(v) > 3 and v[3] > 0 for v in vs)
         for k in STORES.values():
             prev = fila.get(k)
             prev_net = prev[0] if isinstance(prev, list) else prev
@@ -87,11 +89,12 @@ def main():
                 # FollowUP trae filas en cero para tiendas que aun no habia conectado (ej. NB Albrook
                 # hasta jun-2026): si FollowUP dice 0 y el historico de Jorge tiene venta, manda Jorge.
                 if por_dia[d][k][0] == 0 and prev_net: continue
-                # Venta 0 y 0 tickets pero CON visitas = la tienda abrio y FollowUP aun no recibio las
-                # ventas del POS (paso el 6-nov-2026: ventas en cero toda la noche, contador normal).
-                # Se trata como "todavia sin dato": no se escribe el cero y se borra uno escrito antes.
-                v = por_dia[d][k]
-                if v[0] == 0 and v[2] == 0 and len(v) > 3 and v[3] > 0:
+                # Si TODAS las tiendas del dia vienen con venta 0 y 0 tickets pero con visitas, FollowUP
+                # aun no recibio las ventas del POS (paso el 6-nov-2026: ceros toda la noche, contador
+                # normal). Se trata como "todavia sin dato": no se escribe el cero y se borra uno escrito
+                # antes. Una sola tienda en 0 con visitas SI se guarda (Metro Mall o Dorado pueden tener
+                # visitas y ninguna venta en dias especiales).
+                if todas_cero:
                     if k in fila and not prev_net: del fila[k]
                     pendientes.add(key); continue
                 fila[k] = por_dia[d][k]
@@ -137,7 +140,7 @@ def main():
     if ult and ult < hasta:
         print("  AVISO: FollowUP aun no tiene datos de %s" % hasta)
     if pendientes:
-        print("  AVISO: dias con visitas pero SIN ventas en FollowUP (no se escribieron): %s" % ", ".join(sorted(pendientes)))
+        print("  AVISO: dias con visitas pero SIN ventas en ninguna tienda (POS sin sincronizar, no se escribieron): %s" % ", ".join(sorted(pendientes)))
 
 if __name__ == "__main__":
     main()
