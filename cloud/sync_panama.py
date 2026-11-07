@@ -75,7 +75,7 @@ def main():
     # ---- historial de Panama
     pan_path = os.path.join(SITE, "ventas-panama.enc")
     pan = dec(pan_path)
-    nuevos = cambiados = 0
+    nuevos = cambiados = 0; pendientes = set()
     for d in sorted(por_dia):
         key = d.isoformat()
         if any(a <= key <= b for a, b in PROTEGIDO): continue        # se deja como esta (ver PROTEGIDO)
@@ -87,10 +87,20 @@ def main():
                 # FollowUP trae filas en cero para tiendas que aun no habia conectado (ej. NB Albrook
                 # hasta jun-2026): si FollowUP dice 0 y el historico de Jorge tiene venta, manda Jorge.
                 if por_dia[d][k][0] == 0 and prev_net: continue
+                # Venta 0 y 0 tickets pero CON visitas = la tienda abrio y FollowUP aun no recibio las
+                # ventas del POS (paso el 6-nov-2026: ventas en cero toda la noche, contador normal).
+                # Se trata como "todavia sin dato": no se escribe el cero y se borra uno escrito antes.
+                v = por_dia[d][k]
+                if v[0] == 0 and v[2] == 0 and len(v) > 3 and v[3] > 0:
+                    if k in fila and not prev_net: del fila[k]
+                    pendientes.add(key); continue
                 fila[k] = por_dia[d][k]
             elif k in fila: pass                                   # sin fila en FollowUP: se conserva lo que haya
                                                                    # (historico de Jorge; FollowUP tiene huecos en may-jun)
             elif k in primera and d >= primera[k]: fila[k] = [0.0, 0, 0, 0]   # tienda ya en FollowUP, dia sin venta, sin historico
+        if not fila:                                               # dia sin ninguna tienda con dato
+            if key in pan["days"]: del pan["days"][key]; cambiados += 1
+            continue
         if key not in pan["days"]: nuevos += 1
         elif pan["days"][key] != fila: cambiados += 1
         pan["days"][key] = fila
@@ -125,6 +135,8 @@ def main():
               sum(v[2] for v in f.values() if isinstance(v, list) and len(v) > 2)))
     if ult and ult < hasta:
         print("  AVISO: FollowUP aun no tiene datos de %s" % hasta)
+    if pendientes:
+        print("  AVISO: dias con visitas pero SIN ventas en FollowUP (no se escribieron): %s" % ", ".join(sorted(pendientes)))
 
 if __name__ == "__main__":
     main()
