@@ -129,10 +129,11 @@ def main():
     print("FollowUP: %d dias (%s a %s) | nuevos %d | cambiados %d | ultimo %s%s"
           % (len(por_dia), FUP_DESDE, hasta, nuevos, cambiados, ult, " (provisional)" if incluir_hoy else ""))
     print("  primera fecha por tienda:", {k: v.isoformat() for k, v in sorted(primera.items())})
-    if ult:
+    if ult and ult.isoformat() in pan["days"]:
         f = pan["days"][ult.isoformat()]
         print("  %s total 6 tiendas $%s | tickets %d" % (ult, format(sum(v[0] for v in f.values()), ",.2f"),
               sum(v[2] for v in f.values() if isinstance(v, list) and len(v) > 2)))
+    print("  ultimo dia guardado: %s" % max(pan["days"]))
     if ult and ult < hasta:
         print("  AVISO: FollowUP aun no tiene datos de %s" % hasta)
     if pendientes:
